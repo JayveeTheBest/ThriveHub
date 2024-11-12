@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block content %}
+
+        <!-- Welcome Message -->
+        <div class="container mt-4">
+            <h2 class="section-title mb-4">Call Reports</h2>
+            <div class="table-container">
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Caller Name</th>
+                            <th>Gender</th>
+                            <th>Location</th>
+                            <th>Civil Status</th>
+                            <th>Info Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for person in caller %}
+                        <tr>
+                            <td>{{ person.callerName }}</td>
+                            <td>{{ person.gender }}</td>
+                            <td>{{ person.location }}</td>
+                            <td>{{ person.civilStatus }}</td>
+                            <td>{{ person.infoSource }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,561 @@
+/* Main container */
+.dashboard-container {
+    display: flex;
+    height: 100vh;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Sidebar styles */
+.sidebar {
+    background-color: #F0F4F9;
+    width: 250px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: width 0.3s; /* Smooth transition */
+}
+
+.sidebar.collapsed {
+    width: 80px; /* Adjust width when collapsed */
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Adjust this as needed for spacing */
+    position: relative; /* Position relative for absolute children */
+}
+
+.sidebar-logo {
+    width: 60px; /* Adjust the size of the logo */
+    display: none; /* Hide logo by default */
+}
+
+.sidebar-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-right: 10px;
+    color: #038175;
+}
+
+/* Show the logo when collapsed */
+.sidebar.collapsed .sidebar-logo {
+    display: block; /* Show logo when collapsed */
+}
+
+.sidebar.collapsed .sidebar-title {
+    display: none; /* Hide title when collapsed */
+}
+
+.toggle-icon {
+    cursor: pointer; /* Pointer for click */
+    font-size: 24px; /* Size of the icon */
+    color: #4CAF8B; /* Color of the icon */
+    transition: transform 0.3s; /* Smooth transition */
+}
+
+.sidebar.collapsed .toggle-icon i {
+    transform: rotate(180deg); /* Rotate icon when sidebar is collapsed */
+    font-size: 14px;
+}
+
+/* Navigation Links */
+.nav-link {
+    text-decoration: none;
+    color: #4CAF8B;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Align items to the start */
+    margin-top: 50px;
+}
+
+/* Increased size for icons */
+.nav-link i {
+    font-size: 24px; /* Base size for icons */
+    transition: font-size 0.3s; /* Smooth transition for icon size */
+}
+
+/* Text styling */
+.nav-link .nav-text {
+    margin-left: 10px; /* Space between icon and text */
+    transition: display 0.3s; /* Smooth transition for text */
+}
+
+/* When sidebar is collapsed */
+.sidebar.collapsed .nav-text {
+    display: none; /* Completely hide text when collapsed */
+}
+
+/* Show icons only */
+.sidebar.collapsed .nav-link {
+    justify-content: center; /* Center icons in collapsed mode */
+    width: 100%; /* Ensure full width for centering */
+}
+
+/* Increase icon size when collapsed */
+.sidebar.collapsed .nav-link i {
+    font-size: 24px; /* Increase icon size when collapsed */
+}
+
+/* Maintain icon size when expanded */
+.sidebar .nav-link i {
+    font-size: 20px; /* Base size for icons */
+}
+
+/* Footer */
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align footer items to the left */
+    margin-top: auto; /* Push footer to the bottom */
+    font-size: 14px; /* Smaller footer text */
+    color: #038175;
+}
+
+.footer-content {
+    display: block; /* Show footer content by default */
+}
+
+.footer-icon {
+    display: none; /* Hide phone icon by default */
+}
+
+/* Show phone icon when collapsed */
+.sidebar.collapsed .footer-content {
+    display: none; /* Hide footer content when collapsed */
+}
+
+.sidebar.collapsed .footer-icon {
+    display: block; /* Show phone icon when collapsed */
+    font-size: 24px; /* Adjust size as needed */
+    color: #038175; /* Phone icon color */
+    align-items: center;
+    margin-left: 15px;
+}
+
+/* Sidebar links */
+.sidebar a {
+    text-decoration: none;
+    color: #038175;
+    font-size: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar a i {
+    margin-right: 10px; /* Space between icon and text */
+}
+
+.sidebar a:hover {
+    color: #000000;
+}
+
+/* Logo styles */
+.logo {
+    position: relative; /* Set the parent to relative positioning */
+    font-size: 24px; /* Set font size for the text */
+    font-weight: bold; /* Set font weight for the text */
+}
+
+.logo-text {
+    display: inline-block; /* Allow the text to be inline */
+}
+
+.logo-icon {
+    position: absolute; /* Position the logo absolutely within the parent */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust position to center the icon */
+    width: 100px; /* Set width of the logo */
+    height: auto; /* Maintain aspect ratio */
+}
+
+/* Main content area */
+.main-content {
+    flex: 1;
+    background-color: #fff;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    background-color: #fff;
+    height: 70px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.search-container {
+    position: relative; /* For positioning the icons */
+    display: flex;
+    align-items: center; /* Center align the icons and input */
+    width: 100%;
+    align-items: center;
+}
+
+.header .search-bar {
+    width: 90%;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    padding-left: 40px; /* Space for the icon */
+}
+
+.search-icon {
+    position: absolute; /* Position the search icon */
+    left: 10px; /* Space from the left */
+    top: 10px;
+    color: #4CAF8B; /* Icon color */
+}
+
+/* Notification icon */
+.notification-icon {
+    margin-left: 10px; /* Space between search box and notification icon */
+    color: #4CAF8B; /* Icon color */
+    cursor: pointer; /* Pointer for click */
+    font-size: 24px; /* Increase size of notification icon */
+}
+
+/* User info */
+.header .user-info {
+    display: flex;
+    align-items: center; /* Center align the icon and text */
+    text-align: right;
+    margin-left: 20px; /* Adjust margin to move user info left */
+    width: 30%;
+}
+
+.header .user-info i {
+    font-size: 24px; /* Increase size of user icon */
+    margin-right: 20px; /* Space between user icon and text */
+    color: #4CAF8B; /* Color of the user icon */
+}
+
+.header .user-info span {
+    color: #038175;
+    display: flex; /* Enable flexbox for the text */
+    flex-direction: column; /* Stack name and responder */
+}
+
+.responder-text {
+    font-size: 14px; /* Smaller font size for Responder */
+    display: block; /* Make it block to ensure proper line spacing */
+}
+
+.section-title {
+    font-size: 22px;
+    color: #4CAF8B;
+    margin-bottom: 20px;
+}
+
+/* Cards container */
+.cards-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* Cards */
+.card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    flex: 1 1 calc(20% - 20px); /* Allow 3 cards in a row */
+}
+
+.card h3 {
+    color: #4CAF8B;
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+
+.card .chart {
+    height: 150px;
+    width: 100%;
+    background-color: #F0F4F9;
+    border-radius: 5px;
+}
+
+/* Call Volume card style */
+.call-volume-card {
+    flex-basis: 100%; /* Make it full width in the second row */
+    margin-top: 20px; /* Add some space above */
+}
+
+/* Referral Contacts Section */
+.referral-contacts {
+    margin-top: 20px;
+    width: 100%; /* Ensures full width */
+}
+
+.referral-contacts input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    padding-left: 40px;
+}
+
+.filter-blocks {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+    margin-left: 10px;
+}
+
+.filter {
+    padding: 10px 15px;
+    background-color: #f5f5f5;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.filter.active,
+.filter:hover {
+    background-color: #038175;
+    color: white;
+}
+
+.referral-contacts table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 5%;
+}
+
+.referral-contacts th,
+.referral-contacts td {
+    border: 1px solid #e0e0e0;
+    padding: 8px;
+    text-align: left;
+}
+
+.referral-contacts button {
+    background-color: #4CAF8B;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+}
+
+.referral-contacts button:hover {
+    background-color: #2b7059;
+}
+
+/* Form and data summary */
+.form-container {
+    background-color: #F9FAFC;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 20%;
+}
+
+/* Update styles for the dedicated form container */
+#dedicated-form-container {
+    width: 80%;
+    margin: auto; /* Center the form on the page */
+}
+
+.form-container label {
+    font-weight: bolder;
+    color: #4CAF8B;
+    font-size: 14px;
+}
+
+/* Adjust input and select width */
+.form-container input,
+.form-container select,
+.form-container textarea {
+    width: 75%; /* Reduced from 90% to make fields more compact */
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+/* Group related fields together with a flexible layout */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Add space between the fields */
+    margin-bottom: 20px;
+}
+
+.form-row label {
+    width: 100%;
+}
+
+.form-container button {
+    background-color: #4CAF8B;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%); /* Center the button */
+}
+
+.form-container button:hover {
+    background-color: #2b7059;
+}
+
+
+.form-container label {
+    font-weight: bolder;
+    color: #4CAF8B;
+    font-size: 14px;
+}
+
+.form-container input,
+.form-container select {
+    width: 90%;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.form-container button {
+    background-color: #4CAF8B;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    left: 30%;
+}
+
+.form-container h2 {
+    font-size: 16px;
+}
+
+.form-container h3 {
+    font-size: 12px;
+}
+
+.form-container button:hover {
+    background-color: #2b7059;
+}
+
+
+
+/* Footer and details */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+/* Adjustments for responsive design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px;
+    }
+
+    .sidebar.collapsed {
+        width: 70px;
+    }
+
+    .header .search-bar {
+        width: 100%;
+    }
+
+    .card {
+        flex: 1 1 calc(100% - 20px); /* Stack cards in one column on smaller screens */
+    }
+
+    .form-container {
+        width: 100%;
+    }
+}
+
+/* Table Container in Form Reports */
+.table-container {
+    margin-top: 20px;
+    width: 100%;
+    overflow-x: auto; /* Ensure responsiveness on smaller screens */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Light shadow effect for elevation */
+}
+
+/* Styled Table */
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Poppins', sans-serif;
+    color: #038175; /* Main text color */
+    text-align: left;
+    background-color: #F0F4F9; /* Light background */
+}
+
+/* Table Head */
+.styled-table thead {
+    background-color: #4CAF8B; /* Consistent green header */
+    color: white;
+}
+
+/* Table Header Cells */
+.styled-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Table Data Cells */
+.styled-table td {
+    padding: 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #e0e0e0; /* Light border between rows */
+}
+
+/* Alternating Row Colors */
+.styled-table tbody tr:nth-of-type(odd) {
+    background-color: #ffffff; /* White for odd rows */
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #F9FAFC; /* Light gray for even rows */
+}
+
+/* Hover Effect */
+.styled-table tbody tr:hover {
+    background-color: #e0f7f4; /* Light hover effect for better visibility */
+    transition: background-color 0.3s; /* Smooth hover transition */
+}
+
+/* Responsive Table */
+@media (max-width: 768px) {
+    .styled-table td, .styled-table th {
+        padding: 10px; /* Reduce padding for smaller screens */
+    }
+
+    .table-container {
+        padding: 10px; /* Less padding around the table */
+    }
+}
+
+
+

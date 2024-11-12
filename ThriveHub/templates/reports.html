@@ -1,0 +1,138 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block content %}
+
+
+        <!-- Welcome Message -->
+        <h2 class="section-title">REPORTS</h2>
+
+        <!-- Cards Section -->
+        <div class="cards-container">
+            <div class="card">
+                <h3>Reasons for Calling</h3>
+                <div class="chart">[Chart Placeholder]</div>
+            </div>
+            <div class="card">
+                <h3>Callers</h3>
+                <div class="chart">[Chart Placeholder]</div>
+            </div>
+            <div class="card">
+                <h3>Suicide-related Calls</h3>
+                <div class="chart">[Chart Placeholder]</div>
+            </div>
+        </div>
+
+        <!-- Call Volume Card -->
+        <div class="card call-volume-card">
+            <h3>Call Volume</h3>
+            <div class="chart">[Chart Placeholder]</div>
+        </div>
+
+        <!-- Referral Contacts Section -->
+        <div class="referral-contacts">
+            <h3>Referral Contacts</h3>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i> <!-- Magnifying glass icon -->
+                <input type="text" class="search-bar" placeholder="Search psychologists and psychiatrists">
+
+                <!-- Filter Blocks -->
+                <div class="filter-blocks">
+                    <button class="filter active">All</button>
+                    <button class="filter">Male</button>
+                    <button class="filter">Female</button>
+                    <button class="filter">Cebu</button>
+                </div>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Location</th>
+                    <th>Location</th>
+                </tr>
+                <tr>
+                    <td>Ibrahim Yekeni</td>
+                    <td>Male</td>
+                    <td>Manila</td>
+                    <td>Manila</td>
+                </tr>
+                <tr>
+                    <td>Bridget Olowojie</td>
+                    <td>Female</td>
+                    <td>Cebu</td>
+                    <td>Cebu</td>
+                </tr>
+                <tr>
+                    <td>asdf</td>
+                    <td>asdf</td>
+                    <td>asdf</td>
+                    <td>asdf</td>
+                </tr>
+            </table>
+            <button>Go to Referrals</button>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <h2>Call Information</h2>
+        <label for="session-number">Call Session No:</label>
+        <input type="text" id="session-number" value="TPCB10-XXXX" readonly>
+
+        <label for="call-date">Date:</label>
+        <input type="date" id="call-date">
+
+        <label for="shift">Shift:</label>
+        <select id="shift">
+            <option>06:00 AM - 02:00 PM</option>
+            <option>02:00 PM - 10:00 PM</option>
+            <option>10:00 PM - 06:00 AM</option>
+        </select>
+
+        <label for="time-called">Time Called:</label>
+        <input type="time" id="time-called">
+
+        <label for="time-ended">Time Ended:</label>
+        <input type="time" id="time-ended">
+
+        <h2>Caller Information</h2>
+        <label for="caller-name">Name:</label>
+        <input type="text" id="caller-name" placeholder="Enter Caller's Name">
+
+        <label for="gender">Gender:</label>
+        <select id="gender">
+            <option value="" disabled selected>Select Caller's Gender</option> <!-- Placeholder option -->
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="LGTQ++">LGTQ++</option>
+            <option value="N/A">N/A</option>
+        </select>
+
+        <label for="civil-status">Civil Status:</label>
+        <select id="civil-status">
+            <option value="" disabled selected>Select Caller's Civil Status</option> <!-- Placeholder option -->
+            <option>Single</option>
+            <option>Single (Living in)</option>
+            <option>Married</option>
+            <option>Separated</option>
+            <option>Widowed</option>
+            <option>N/A</option>
+        </select>
+
+        <label for="location">Location:</label>
+        <input type="text" id="location" placeholder="Enter City or Country">
+
+        <button>Summarize</button>
+    </div>
+
+</div>
+
+
+</body>
+</html>
+
+{% endblock %}
