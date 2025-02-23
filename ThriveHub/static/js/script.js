@@ -37,3 +37,24 @@
 
     // Call the function on page load
     window.onload = setDefaultValues;
+
+
+    // Conditional Form fields
+    function toggleConditionalFields() {
+        const reason = document.getElementById("reason-for-calling").value;
+        document.getElementById("conditional-fields").style.display = reason === "Calling for another Person" ? "block" : "none";
+    }
+
+    function toggleSelfHarmingFields() {
+        const risk = document.getElementById("risk-assessment").value;
+        document.getElementById("self-harming-fields").style.display = (risk === "Moderate Risk" || risk === "High Risk") ? "block" : "none";
+    }
+
+    function saveEditableSummary() {
+        const editedSummary = document.getElementById('editableSummary').innerText;
+        console.log('Edited Summary:', editedSummary);
+        // Send updated summary to the server
+    }
+
+
+

@@ -13,7 +13,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: width 0.3s; /* Smooth transition */
+    transition: width 0.4s; /* Smooth transition */
 }
 
 .sidebar.collapsed {
@@ -139,7 +139,7 @@
 .sidebar a {
     text-decoration: none;
     color: #038175;
-    font-size: 5px;
+    font-size: 15px;
     display: flex;
     align-items: center;
 }
@@ -172,6 +172,11 @@
     height: auto; /* Maintain aspect ratio */
 }
 
+.def-btn {
+    background-color: #4CAF8B;
+    color: white;
+}
+
 /* Main content area */
 .main-content {
     flex: 1;
@@ -184,7 +189,7 @@
 .header {
     background-color: #fff;
     height: 70px;
-    padding: 0 20px;
+    padding: 10px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -195,12 +200,12 @@
     position: relative; /* For positioning the icons */
     display: flex;
     align-items: center; /* Center align the icons and input */
-    width: 100%;
+    width: 200%;
     align-items: center;
 }
 
 .header .search-bar {
-    width: 90%;
+    width: 100%;
     padding: 10px;
     border: 1px solid #e0e0e0;
     border-radius: 5px;
@@ -210,16 +215,8 @@
 .search-icon {
     position: absolute; /* Position the search icon */
     left: 10px; /* Space from the left */
-    top: 10px;
+    top: 15px;
     color: #4CAF8B; /* Icon color */
-}
-
-/* Notification icon */
-.notification-icon {
-    margin-left: 10px; /* Space between search box and notification icon */
-    color: #4CAF8B; /* Icon color */
-    cursor: pointer; /* Pointer for click */
-    font-size: 24px; /* Increase size of notification icon */
 }
 
 /* User info */
@@ -244,7 +241,7 @@
 }
 
 .responder-text {
-    font-size: 14px; /* Smaller font size for Responder */
+    font-size: 11px; /* Smaller font size for Responder */
     display: block; /* Make it block to ensure proper line spacing */
 }
 
@@ -252,6 +249,7 @@
     font-size: 22px;
     color: #4CAF8B;
     margin-bottom: 20px;
+    margin-top: 20px;
 }
 
 /* Cards container */
@@ -268,6 +266,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
     flex: 1 1 calc(20% - 20px); /* Allow 3 cards in a row */
+    width: 20%;
 }
 
 .card h3 {
@@ -285,8 +284,18 @@
 
 /* Call Volume card style */
 .call-volume-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
     flex-basis: 100%; /* Make it full width in the second row */
     margin-top: 20px; /* Add some space above */
+}
+
+.call-volume-card h3 {
+    color: #4CAF8B;
+    font-size: 20px;
+    margin-bottom: 10px;
 }
 
 /* Referral Contacts Section */
@@ -348,6 +357,7 @@
     border-radius: 5px;
     cursor: pointer;
     position: relative;
+    width: 100%;
 }
 
 .referral-contacts button:hover {
@@ -361,6 +371,22 @@
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     width: 20%;
+    height: fit-content;
+}
+
+.full-form-container {
+    background-color: #F9FAFC;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    height: fit-content;
+}
+
+.full-form-container label {
+    font-weight: bolder;
+    color: #4CAF8B;
+    font-size: 14px;
 }
 
 /* Update styles for the dedicated form container */
@@ -406,7 +432,7 @@
     border-radius: 5px;
     cursor: pointer;
     position: relative;
-    left: 50%;
+    width: 100%;
     transform: translateX(-50%); /* Center the button */
 }
 
@@ -438,7 +464,7 @@
     border-radius: 5px;
     cursor: pointer;
     position: relative;
-    left: 30%;
+    left: 50%;
 }
 
 .form-container h2 {
@@ -492,7 +518,6 @@
 .table-container {
     margin-top: 20px;
     width: 100%;
-    overflow-x: auto; /* Ensure responsiveness on smaller screens */
     background-color: #fff;
     padding: 20px;
     border-radius: 10px;
@@ -555,6 +580,118 @@
     .table-container {
         padding: 10px; /* Less padding around the table */
     }
+}
+
+/* Initially hide delete icon */
+.delete-icon-cell .delete-icon {
+    display: none;
+}
+
+/* Show delete icon when row is hovered */
+.contact-row:hover .delete-icon-cell .delete-icon {
+    display: inline;
+    color: red;  /* You can change the color to make it more prominent */
+    text-decoration: none;
+}
+
+/* Make the row look clickable */
+.contact-row {
+    cursor: pointer;
+}
+
+/* Optionally, style the row on hover */
+.contact-row:hover {
+    background-color: #f4f4f4;  /* Light gray background on hover */
+}
+
+.floating-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #4CAF8B;
+    color: white;
+    border-radius: 10%;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-size: 24px;
+    text-align: center;
+    z-index: 1000;
+}
+
+.floating-btn:hover {
+    background-color: #f4f4f4;
+    color: #4CAF8B;
+}
+
+.year-filter {
+    position: relative;
+    top: -10%;
+    left: 85%;
+    z-index: 1; /* Ensure the dropdown is above the chart */
+    width: 20%;
+    padding: 5px;
+
+}
+
+.year-filter label {
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.year-filter select {
+    padding: 5px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.add-call-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    background-color: #4CAF8B
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+    white-space: nowrap;
+    position: relative;
+    margin-left: 10px;
+}
+
+.add-call-btn i {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Keeps the icon centered */
+    transition: left 0.3s ease-in-out;
+}
+
+.add-call-btn .btn-text {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out;
+    margin-left: 10px;
+}
+
+.add-call-btn:hover {
+    width: 120px; /* Expands */
+    padding: 0 12px;
+    justify-content: start;
+}
+
+.add-call-btn:hover i {
+    left: 5px; /* Moves icon slightly to the left */
+    transform: translateX(0);
+    color: white;
+}
+
+.add-call-btn:hover .btn-text {
+    opacity: 1;
+    visibility: visible;
+    color: white;
 }
 
 

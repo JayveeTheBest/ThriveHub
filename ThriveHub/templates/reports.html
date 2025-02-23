@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Dashboard
+    Call Reports
 {% endblock %}
 
 {% block content %}
@@ -74,65 +74,160 @@
                     <td>asdf</td>
                 </tr>
             </table>
-            <button>Go to Referrals</button>
+
         </div>
-    </div>
 
+        <!-- Call Form Section -->
     <div class="form-container">
-        <h2>Call Information</h2>
-        <label for="session-number">Call Session No:</label>
-        <input type="text" id="session-number" value="TPCB10-XXXX" readonly>
-
-        <label for="call-date">Date:</label>
-        <input type="date" id="call-date">
-
-        <label for="shift">Shift:</label>
-        <select id="shift">
-            <option>06:00 AM - 02:00 PM</option>
-            <option>02:00 PM - 10:00 PM</option>
-            <option>10:00 PM - 06:00 AM</option>
-        </select>
-
-        <label for="time-called">Time Called:</label>
-        <input type="time" id="time-called">
-
-        <label for="time-ended">Time Ended:</label>
-        <input type="time" id="time-ended">
-
-        <h2>Caller Information</h2>
-        <label for="caller-name">Name:</label>
-        <input type="text" id="caller-name" placeholder="Enter Caller's Name">
-
-        <label for="gender">Gender:</label>
-        <select id="gender">
-            <option value="" disabled selected>Select Caller's Gender</option> <!-- Placeholder option -->
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="LGTQ++">LGTQ++</option>
-            <option value="N/A">N/A</option>
-        </select>
-
-        <label for="civil-status">Civil Status:</label>
-        <select id="civil-status">
-            <option value="" disabled selected>Select Caller's Civil Status</option> <!-- Placeholder option -->
-            <option>Single</option>
-            <option>Single (Living in)</option>
-            <option>Married</option>
-            <option>Separated</option>
-            <option>Widowed</option>
-            <option>N/A</option>
-        </select>
-
-        <label for="location">Location:</label>
-        <input type="text" id="location" placeholder="Enter City or Country">
-
-        <button>Summarize</button>
+            <h2>Call Information</h2>
+            <label for="session-number">Call Session No: TPCB10-XXXX</label>
+            <br><br>
+            <label for="call-date">Date:</label>
+            <input type="date" id="call-date">
+            <br>
+            <label for="time-called">Time Called:</label>
+            <input type="time" id="time-called">
+            <br>
+            <label for="time-ended">Time Ended:</label>
+            <input type="time" id="time-ended">
+            <br>
+            <h2>Caller Information</h2>
+            <label for="caller-name">Name:</label>
+            <input type="text" id="caller-name" placeholder="Enter Caller's Name">
+            <br>
+            <label for="gender">Gender:</label>
+            <select id="gender">
+                <option value="" disabled selected>Select Gender</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>LGTQ++</option>
+                <option>N/A</option>
+            </select>
+            <br>
+            <label for="civil-status">Status:</label>
+            <select id="civil-status">
+                <option value="" disabled selected>Select Status</option>
+                <option>Single</option>
+                <option>Single (Living in)</option>
+                <option>Married</option>
+                <option>Separated</option>
+                <option>Widowed</option>
+                <option>N/A</option>
+            </select>
+            <br>
+            <label for="age">Age:</label>
+            <input type="number" id="age" placeholder="Enter Age">
+            <br>
+            <label for="location">Location:</label>
+            <input type="text" id="location" placeholder="Enter City or Country">
+            <br>
+            <label for="source-of-info">Source of Info:</label>
+            <select id="source-of-info">
+                <option value="" disabled selected>Select Source</option>
+                <option>Online</option>
+                <option>Media</option>
+                <option>Family/Friend</option>
+                <option>Colleague</option>
+                <option>Referral</option>
+            </select>
+            <br>
+            <label for="reason-for-calling">Reason for Calling:</label>
+            <select id="reason-for-calling" onchange="toggleConditionalFields()">
+                <option value="" disabled selected>Select Reason</option>
+                <option value="Mental Health">Mental Health</option>
+                <option value="Marital">Marital</option>
+                <option value="Suicidal Crisis">Suicidal Crisis</option>
+                <option value="Calling for another Person">Calling for another Person</option>
+            </select>
+            <br>
+            <label for="intervention">Intervention:</label>
+            <select id="intervention">
+                <option value="" disabled selected>Select Intervention</option>
+                <option>Psycho education</option>
+                <option>Referral</option>
+                <option>Empathetic Listening</option>
+            </select>
+            <br>
+            <label for="risk-assessment">Risk Assessment:</label>
+            <select id="risk-assessment" onchange="toggleSelfHarmingFields()">
+                <option value="" disabled selected>Select Risk</option>
+                <option value="Low Risk">Low Risk</option>
+                <option value="Moderate Risk">Moderate Risk</option>
+                <option value="High Risk">High Risk</option>
+            </select>
+            <br>
+            <div id="self-harming-fields" style="display: none;">
+                <label for="self-harming-method">Suicide/Self-Harming Method:</label>
+                <select id="self-harming-method">
+                    <option value="" disabled selected>Select Method</option>
+                    <option>Overdosing</option>
+                    <option>Hanging</option>
+                    <option>N/A</option>
+                </select>
+            </div>
+            <div id="conditional-fields" style="display: none;">
+                <h2>Other Person's Information</h2>
+                <label for="other-name">Name:</label>
+                <input type="text" id="other-name" placeholder="Enter Name">
+                <br>
+                <label for="other-gender">Gender:</label>
+                <select id="other-gender">
+                    <option value="" disabled selected>Select Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>LGTQ++</option>
+                    <option>N/A</option>
+                </select>
+                <br>
+                <label for="other-status">Status:</label>
+                <select id="other-status">
+                    <option value="" disabled selected>Select Status</option>
+                    <option>Single</option>
+                    <option>Single (Living in)</option>
+                    <option>Married</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                    <option>N/A</option>
+                </select>
+                <br>
+                <label for="other-age">Age:</label>
+                <input type="number" id="other-age" placeholder="Enter Age">
+                <br>
+                <label for="other-location">Location:</label>
+                <input type="text" id="other-location" placeholder="Enter Location">
+                <br>
+                <label for="other-risk-assessment">Risk Assessment:</label>
+                <select id="other-risk-assessment">
+                    <option value="" disabled selected>Select Risk</option>
+                    <option>Low Risk</option>
+                    <option>Moderate Risk</option>
+                    <option>High Risk</option>
+                </select>
+                <br>
+                <label for="coping-mechanism">Coping Mechanism:</label>
+                <input type="text" id="coping-mechanism" placeholder="Enter Coping Mechanism">
+                <br>
+                <label for="other-comments">Other Comments:</label>
+                <textarea id="other-comments" placeholder="Enter Comments"></textarea>
+            </div>
+            <button>
+                <i class="fa-solid fa-bolt" aria-hidden="true" style="margin-right: 5px;"></i> Summarize
+            </button>
     </div>
 
+    <script>
+        function toggleConditionalFields() {
+            const reason = document.getElementById("reason-for-calling").value;
+            document.getElementById("conditional-fields").style.display = reason === "Calling for another Person" ? "block" : "none";
+        }
+
+        function toggleSelfHarmingFields() {
+            const risk = document.getElementById("risk-assessment").value;
+            document.getElementById("self-harming-fields").style.display = (risk === "Moderate Risk" || risk === "High Risk") ? "block" : "none";
+        }
+    </script>
+
+    </div>
 </div>
-
-
-</body>
-</html>
 
 {% endblock %}

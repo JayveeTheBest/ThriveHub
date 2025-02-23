@@ -3,6 +3,8 @@ from . import views
 
 
 urlpatterns = [
-    path('', views.form),
-    path('callReports/', views.callReports),
+    path('callReports/', views.callReports, name='Reports'),
+    path('', views.addCall, name='AddCall'),
+    path('callSummary/<int:session_id>', views.summaryPage, name='SummaryPage'),
+    path('export', views.exportCallReports, name='Export'),
 ]

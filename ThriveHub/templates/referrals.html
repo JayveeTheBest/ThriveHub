@@ -1,116 +1,85 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Dashboard
+    Call Reports
 {% endblock %}
 
 {% block content %}
 
+        {% block referral_table %}
         <!-- Welcome Message -->
-        <h2 class="section-title">REFERRALS</h2>
-
-        <!-- Referral Contacts Section -->
-        <div class="referral-contacts">
-            <h3>Referral Contacts</h3>
-            <div class="search-container">
-                <i class="fas fa-search search-icon"></i> <!-- Magnifying glass icon -->
-                <input type="text" class="search-bar" placeholder="Search psychologists and psychiatrists">
-
-                <!-- Filter Blocks -->
-                <div class="filter-blocks">
-                    <button class="filter active">All</button>
-                    <button class="filter">Male</button>
-                    <button class="filter">Female</button>
-                    <button class="filter">Cebu</button>
+        <div class="container mt-4">
+            <div class="row align-items-center">
+                <div class="col-4">
+                    <h2 class="section-title"> Referral Contacts
+                        <a href="{% url 'add_referral' %}" class="btn btn-sm def-btn">
+                            <i class="fa-solid fa-plus"></i>
+                        </a>
+                    </h2>
                 </div>
+
+                <div class="col-8">
+                <form method="GET" class="d-flex justify-content-end">
+                    <input type="text" name="search" placeholder="Search by name" value="{{ request.GET.search }}">
+                    <select name="gender" class="form-select" aria-label="Gender">
+                        <option value="All" {% if request.GET.gender == "All" %}selected{% endif %}> All Gender </option>
+                        <option value="Male" {% if request.GET.gender == "Male" %}selected{% endif %}> Male </option>
+                        <option value="Female" {% if request.GET.gender == "Female" %}selected{% endif %}> Female </option>
+                    </select>
+                    <input type="text" name="location" placeholder="Filter by location" value="{{ request.GET.location }}">
+                    <button class="btn def-btn" type="submit">Filter</button>
+                </form>
+                </div>
+
             </div>
 
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Location</th>
-                </tr>
-                <tr>
-                    <td>Ibrahim Yekeni</td>
-                    <td>Male</td>
-                    <td>Manila</td>
-                    <td>Manila</td>
-                </tr>
-                <tr>
-                    <td>Bridget Olowojie</td>
-                    <td>Female</td>
-                    <td>Cebu</td>
-                    <td>Cebu</td>
-                </tr>
-                <tr>
-                    <td>asdf</td>
-                    <td>asdf</td>
-                    <td>asdf</td>
-                    <td>asdf</td>
-                </tr>
+        <div class="table-container">
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Location</th>
+                        <th>Phone Number</th>
+                        <th>Email Address</th>
+                        <th>Last Updated</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in contacts %}
+                    <tr class="contact-row" data-href="{% url 'edit_referral' contact.pk %}">
+                        <td>{{ contact.name }}</td>
+                        <td>{{ contact.gender }}</td>
+                        <td>{{ contact.location }}</td>
+                        <td>{{ contact.phone }}</td>
+                        <td>{{ contact.email }}</td>
+                        <td>{{ contact.date_updated }}</td>
+                        <td class="delete-icon-cell">
+                            <a href="{% url 'delete_referral' contact.pk %}" class="delete-icon"><i class="fa fa-trash"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
-            <button>Go to Referrals</button>
+        </div>
+
+        <script>
+            // Make the entire row clickable to edit
+            document.querySelectorAll('.contact-row').forEach(row => {
+                row.addEventListener('click', function() {
+                    window.location = row.getAttribute('data-href');
+                });
+            });
+        </script>
+        {% endblock %}
+
         </div>
     </div>
-
-    <div class="form-container">
-        <h2>Call Information</h2>
-        <label for="session-number">Call Session No:</label>
-        <input type="text" id="session-number" value="TPCB10-XXXX" readonly>
-
-        <label for="call-date">Date:</label>
-        <input type="date" id="call-date">
-
-        <label for="shift">Shift:</label>
-        <select id="shift">
-            <option>06:00 AM - 02:00 PM</option>
-            <option>02:00 PM - 10:00 PM</option>
-            <option>10:00 PM - 06:00 AM</option>
-        </select>
-
-        <label for="time-called">Time Called:</label>
-        <input type="time" id="time-called">
-
-        <label for="time-ended">Time Ended:</label>
-        <input type="time" id="time-ended">
-
-        <h2>Caller Information</h2>
-        <label for="caller-name">Name:</label>
-        <input type="text" id="caller-name" placeholder="Enter Caller's Name">
-
-        <label for="gender">Gender:</label>
-        <select id="gender">
-            <option value="" disabled selected>Select Caller's Gender</option> <!-- Placeholder option -->
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="LGTQ++">LGTQ++</option>
-            <option value="N/A">N/A</option>
-        </select>
-
-        <label for="civil-status">Civil Status:</label>
-        <select id="civil-status">
-            <option value="" disabled selected>Select Caller's Civil Status</option> <!-- Placeholder option -->
-            <option>Single</option>
-            <option>Single (Living in)</option>
-            <option>Married</option>
-            <option>Separated</option>
-            <option>Widowed</option>
-            <option>N/A</option>
-        </select>
-
-        <label for="location">Location:</label>
-        <input type="text" id="location" placeholder="Enter City or Country">
-
-        <button>Summarize</button>
-    </div>
-
 </div>
 
 
 </body>
 </html>
-
 
 {% endblock %}

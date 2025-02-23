@@ -1,0 +1,509 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block content %}
+
+        <!-- Welcome Message -->
+        <h2 class="section-title">Welcome, Jayvee. Ready to save lives?</h2>
+
+
+        <!-- Cards Section -->
+        <div class="cards-container">
+            <div class="card">
+                <h3>Reasons for Calling</h3>
+                <div class="chart"><canvas id="reasonsChart"></canvas></div>
+            </div>
+            <div class="card">
+                <h3>Callers</h3>
+                <div class="chart"><canvas id="genderChart"></div>
+            </div>
+            <div class="card">
+                <h3>Suicide-related Call</h3>
+                <div class="chart"><canvas id="suicideCallsChart"></div>
+            </div>
+        </div>
+
+        <!-- Call Volume Card -->
+        <div class="call-volume-card">
+            <h3>Call Volume</h3>
+            <div class="chart"><canvas id="callVolumeChart"></div>
+        </div>
+
+        <!-- Referral Contacts Section -->
+        <div class="referral-contacts">
+            <h3>Referral Contacts</h3>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i> <!-- Magnifying glass icon -->
+                <input type="text" class="search-bar" placeholder="Search psychologists and psychiatrists">
+
+                <!-- Filter Blocks -->
+                <div class="filter-blocks">
+                    <button class="filter active">All</button>
+                    <button class="filter">Male</button>
+                    <button class="filter">Female</button>
+                    <button class="filter">Cebu</button>
+                </div>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Location</th>
+                    <th>Location</th>
+                </tr>
+                <tr>
+                    <td>Ibrahim Yekeni</td>
+                    <td>Male</td>
+                    <td>Manila</td>
+                    <td>Manila</td>
+                </tr>
+                <tr>
+                    <td>Bridget Olowojie</td>
+                    <td>Female</td>
+                    <td>Cebu</td>
+                    <td>Cebu</td>
+                </tr>
+                <tr>
+                    <td>asdf</td>
+                    <td>asdf</td>
+                    <td>asdf</td>
+                    <td>asdf</td>
+                </tr>
+            </table>
+            <button>Go to Referrals</button>
+        </div>
+    </div>
+
+    <!-- Call Form Section -->
+    <div class="form-container">
+            <h2>Call Information</h2>
+            <label for="session-number">Call Session No: TPCB10-XXXX</label>
+            <br><br>
+            <label for="call-date">Date:</label>
+            <input type="date" id="call-date">
+            <br>
+            <label for="time-called">Time Called:</label>
+            <input type="time" id="time-called">
+            <br>
+            <label for="time-ended">Time Ended:</label>
+            <input type="time" id="time-ended">
+            <br>
+            <h2>Caller Information</h2>
+            <label for="caller-name">Name:</label>
+            <input type="text" id="caller-name" placeholder="Enter Caller's Name">
+            <br>
+            <label for="gender">Gender:</label>
+            <select id="gender">
+                <option value="" disabled selected>Select Gender</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>LGTQ++</option>
+                <option>N/A</option>
+            </select>
+            <br>
+            <label for="civil-status">Status:</label>
+            <select id="civil-status">
+                <option value="" disabled selected>Select Status</option>
+                <option>Single</option>
+                <option>Single (Living in)</option>
+                <option>Married</option>
+                <option>Separated</option>
+                <option>Widowed</option>
+                <option>N/A</option>
+            </select>
+            <br>
+            <label for="age">Age:</label>
+            <input type="number" id="age" placeholder="Enter Age">
+            <br>
+            <label for="location">Location:</label>
+            <input type="text" id="location" placeholder="Enter City or Country">
+            <br>
+            <label for="source-of-info">Source of Info:</label>
+            <select id="source-of-info">
+                <option value="" disabled selected>Select Source</option>
+                <option>Online</option>
+                <option>Media</option>
+                <option>Family/Friend</option>
+                <option>Colleague</option>
+                <option>Referral</option>
+            </select>
+            <br>
+            <label for="reason-for-calling">Reason for Calling:</label>
+            <select id="reason-for-calling" onchange="toggleConditionalFields()">
+                <option value="" disabled selected>Select Reason</option>
+                <option value="Mental Health">Mental Health</option>
+                <option value="Marital">Marital</option>
+                <option value="Suicidal Crisis">Suicidal Crisis</option>
+                <option value="Calling for another Person">Calling for another Person</option>
+            </select>
+            <br>
+            <label for="intervention">Intervention:</label>
+            <select id="intervention">
+                <option value="" disabled selected>Select Intervention</option>
+                <option>Psycho education</option>
+                <option>Referral</option>
+                <option>Empathetic Listening</option>
+            </select>
+            <br>
+            <label for="risk-assessment">Risk Assessment:</label>
+            <select id="risk-assessment" onchange="toggleSelfHarmingFields()">
+                <option value="" disabled selected>Select Risk</option>
+                <option value="Low Risk">Low Risk</option>
+                <option value="Moderate Risk">Moderate Risk</option>
+                <option value="High Risk">High Risk</option>
+            </select>
+            <br>
+            <div id="self-harming-fields" style="display: none;">
+                <label for="self-harming-method">Suicide/Self-Harming Method:</label>
+                <select id="self-harming-method">
+                    <option value="" disabled selected>Select Method</option>
+                    <option>Overdosing</option>
+                    <option>Hanging</option>
+                    <option>N/A</option>
+                </select>
+            </div>
+            <div id="conditional-fields" style="display: none;">
+                <h2>Other Person's Information</h2>
+                <label for="other-name">Name:</label>
+                <input type="text" id="other-name" placeholder="Enter Name">
+                <br>
+                <label for="other-gender">Gender:</label>
+                <select id="other-gender">
+                    <option value="" disabled selected>Select Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>LGTQ++</option>
+                    <option>N/A</option>
+                </select>
+                <br>
+                <label for="other-status">Status:</label>
+                <select id="other-status">
+                    <option value="" disabled selected>Select Status</option>
+                    <option>Single</option>
+                    <option>Single (Living in)</option>
+                    <option>Married</option>
+                    <option>Separated</option>
+                    <option>Widowed</option>
+                    <option>N/A</option>
+                </select>
+                <br>
+                <label for="other-age">Age:</label>
+                <input type="number" id="other-age" placeholder="Enter Age">
+                <br>
+                <label for="other-location">Location:</label>
+                <input type="text" id="other-location" placeholder="Enter Location">
+                <br>
+                <label for="other-risk-assessment">Risk Assessment:</label>
+                <select id="other-risk-assessment">
+                    <option value="" disabled selected>Select Risk</option>
+                    <option>Low Risk</option>
+                    <option>Moderate Risk</option>
+                    <option>High Risk</option>
+                </select>
+                <br>
+                <label for="coping-mechanism">Coping Mechanism:</label>
+                <input type="text" id="coping-mechanism" placeholder="Enter Coping Mechanism">
+                <br>
+                <label for="other-comments">Other Comments:</label>
+                <textarea id="other-comments" placeholder="Enter Comments"></textarea>
+            </div>
+            <button>
+                <i class="fa-solid fa-bolt" aria-hidden="true" style="margin-right: 5px;"></i> Summarize
+            </button>
+    </div>
+
+    <script>
+        function toggleConditionalFields() {
+            const reason = document.getElementById("reason-for-calling").value;
+            document.getElementById("conditional-fields").style.display = reason === "Calling for another Person" ? "block" : "none";
+        }
+
+        function toggleSelfHarmingFields() {
+            const risk = document.getElementById("risk-assessment").value;
+            document.getElementById("self-harming-fields").style.display = (risk === "Moderate Risk" || risk === "High Risk") ? "block" : "none";
+        }
+    </script>
+
+
+</div>
+
+<!-- Bootstrap and JavaScript libraries -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+<!-- Charts.js for the graphs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('reasonsChart');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Relationships', 'Suicidal Crisis', 'Career'],
+                datasets: [{
+                    label: '# of Calls',
+                    data: [2102, 1023, 523],
+                    backgroundColor: ['#66BB6A', '#03695C', '#80CBC4'],
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right', // Position the legend to the right of the chart
+                        align: 'start', // Align the labels to the top (start of the container)
+                        labels: {
+                            font: {
+                                size: 12
+                            },
+                            color: '#034f49',
+                            padding: 15, // Add padding between each label
+                            boxWidth: 12, // Set smaller box width for color legend
+                            boxHeight: 12, // Optional: smaller box height for color legend
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#FFF',
+                        borderWidth: 1,
+                        bodyFont: {
+                            size: 14
+                        },
+                        titleFont: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 10,
+                        boxPadding: 10
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 20,
+                        bottom: 20,
+                    }
+                },
+                cutout: '50%',
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+
+
+    const genderCtx = document.getElementById('genderChart');
+        new Chart(genderCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Male', 'Female', 'Prefer Not to Say'],
+                datasets: [{
+                    label: '# of Calls',
+                    data: [1400, 1600, 200,],
+                    backgroundColor: ['#038175', '#F44336', 'gray'],
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right',
+                        align: 'start',
+                        labels: {
+                            font: {
+                                size: 12
+                            },
+                            color: '#034f49',
+                            padding: 15,
+                            boxWidth: 12,
+                            boxHeight: 12,
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#FFF',
+                        borderWidth: 1,
+                        bodyFont: {
+                            size: 14
+                        },
+                        titleFont: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 10,
+                        boxPadding: 10
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 20,
+                        bottom: 20,
+                    }
+                },
+                cutout: '50%',
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+
+    const suicideCtx = document.getElementById('suicideCallsChart');
+        new Chart(suicideCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Depression', 'Self-harm Intent', 'Family Issues'],
+                datasets: [{
+                    label: '# of Suicide-Related Calls',
+                    data: [800, 600, 450],
+                    backgroundColor: ['#038175', '#03695C', '#03A194'],
+                    hoverOffset: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right',
+                        align: 'start',
+                        labels: {
+                            font: {
+                                size: 12
+                            },
+                            color: '#038175',
+                            padding: 15,
+                            boxWidth: 12,
+                            boxHeight: 12,
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#FFF',
+                        borderWidth: 1,
+                        bodyFont: {
+                            size: 14
+                        },
+                        titleFont: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 10,
+                        boxPadding: 10
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 20,
+                        bottom: 20,
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+
+
+    const callVolumeCtx = document.getElementById('callVolumeChart');
+        new Chart(callVolumeCtx, {
+            type: 'bar',
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October'],
+                datasets: [{
+                    label: 'Call Volume',
+                    data: [300, 450, 380, 500, 620, 700, 650, 780, 820, 900],
+                    backgroundColor: '#038175', // Set a single color for all bars
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                        position: 'top', // Display legend at the top
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            color: '#034f49',
+                            padding: 10,
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        borderColor: '#FFF',
+                        borderWidth: 1,
+                        bodyFont: {
+                            size: 14
+                        },
+                        titleFont: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: 10,
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            display: false // Remove grid lines for the x-axis for a cleaner look
+                        },
+                        ticks: {
+                            font: {
+                                size: 9
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#e0e0e0', // Light gray color for the y-axis grid lines
+                        },
+                        ticks: {
+                            font: {
+                                size: 9
+                            },
+                            stepSize: 100 // Set step size for y-axis to make it easier to read
+                        }
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 20,
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                    }
+                },
+                animation: {
+                    duration: 1000, // Animation duration for bar drawing
+                    easing: 'easeOutBounce', // Easing function for a smoother effect
+                }
+            }
+        });
+
+
+
+
+</script>
+
+
+
+</body>
+</html>
+
+{% endblock %}

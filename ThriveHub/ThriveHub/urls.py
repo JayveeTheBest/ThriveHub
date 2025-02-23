@@ -26,7 +26,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.dashboard, name='dashboard'),
     path('reports/', views.reports),
-    path('referrals/', views.referrals),
+    path('referrals/', views.referrals, name='referrals'),
+    path('add/', views.add_referral, name='add_referral'),
+    path('edit/<int:pk>/', views.edit_referral, name='edit_referral'),
+    path('delete/<int:pk>/', views.delete_referral, name='delete_referral'),
     path('form/', include('form.urls')),
     path('responder/', include(('responder.urls', 'responder'), namespace='responder')),
+    path('settings/', views.settings, name='settings',)
 ]

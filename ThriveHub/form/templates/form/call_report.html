@@ -1,44 +1,156 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Dashboard
+    Call Reports
 {% endblock %}
 
 {% block content %}
+    <!-- Welcome Message -->
+    <div>
+        <h2 class="section-title mb-4">
+            Summary of Information
+            <a href="{% url 'AddCall' %}" class="btn btn-sm def-btn">
+                <i class="fa-solid fa-plus"></i>
+            </a>
+            <a href="{% url 'Export' %}?start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&responder={{ filters.responder }}&caller_type={{ filters.caller_type }}" class="btn btn-sm def-btn">
+    <i class="fa-solid fa-download"></i>
+</a>
+        </h2>
 
-        <!-- Welcome Message -->
-        <div class="container mt-4">
-            <h2 class="section-title mb-4">Call Reports</h2>
-            <div class="table-container">
-                <table class="styled-table">
-                    <thead>
-                        <tr>
-                            <th>Caller Name</th>
-                            <th>Gender</th>
-                            <th>Location</th>
-                            <th>Civil Status</th>
-                            <th>Info Source</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for person in caller %}
-                        <tr>
-                            <td>{{ person.callerName }}</td>
-                            <td>{{ person.gender }}</td>
-                            <td>{{ person.location }}</td>
-                            <td>{{ person.civilStatus }}</td>
-                            <td>{{ person.infoSource }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- Display a message if no calls are logged -->
+        {% if not callSession %}
+            <div class="alert alert-info" role="alert">
+                No calls logged. <a href="{% url 'AddCall' %}" class="alert-link">Start logging your calls now.</a>
+            </div>
+        {% else %}
+
+
+        <div class="table-container">
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Session ID</th>
+                        <th>Call Duration</th>
+                        <th>Caller Name</th>
+                        <th>Gender</th>
+                        <th>Civil Status</th>
+                        <th>Age</th>
+                        <th>Location</th>
+                        <th>Info Source</th>
+                        <th>Reasons for Calling</th>
+                        <th>Intervention</th>
+                        <th>Risk Assessment</th>
+                        <th>Responder</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in callSession %}
+                    <tr class="clickable-row" data-bs-toggle="modal" data-bs-target="#detailsModal"
+                        data-session-id="{{ formatted_session_id }}"
+                        data-start-time="{{ session.startTime }}"
+                        data-end-time="{{ session.endTime }}"
+                        data-caller-name="{{ session.caller.callerName }}"
+                        data-gender="{{ session.caller.gender }}"
+                        data-civil-status="{{ session.caller.civilStatus }}"
+                        data-age="{{ session.caller.age }}"
+                        data-location="{{ session.caller.location }}"
+                        data-info-source="{{ session.caller.infoSource }}"
+                        data-caller-type="{{ session.caller.reason }}"
+                        data-intervention="{{ session.caller.intervention }}"
+                        data-risk-assessment="{{ session.caller.riskAssessment }}"
+                        data-ai-summary="{{ session.transcript.transcriptSummary }}"
+                        data-responder=" {{session.responder }}">
+
+                        <td>TPCB24-00{{ session.sessionID }}</td>
+                        <td>{{ session.duration }}</td>
+                        <td>{{ session.caller.callerName }}</td>
+                        <td>{{ session.caller.gender }}</td>
+                        <td>{{ session.caller.civilStatus }}</td>
+                        <td>{{ session.caller.age }}</td>
+                        <td>{{ session.caller.location }}</td>
+                        <td>{{ session.caller.infoSource }}</td>
+                        <td>{{ session.caller.reason }}</td>
+                        <td>{{ session.caller.intervention }}</td>
+                        <td>{{ session.caller.riskAssessment }}</td>
+                        <td>{{ session.responder }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal for displaying detailed information -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailsModalLabel">Detailed Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa fa-close"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h4>Session Information</h4>
+                    <p><strong>Session ID:</strong> <span id="sessionID"></span></p>
+                    <p><strong>Start Time:</strong> <span id="startTime"></span></p>
+                    <p><strong>End Time:</strong> <span id="endTime"></span></p>
+                    <p><strong>Outcome:</strong> <span id="outcome"></span></p>
+                    <p><strong>Responder:</strong> <span id="responder"></span></p>
+
+                    <hr>
+
+                    <h4>Caller Information</h4>
+                    <p><strong>Name:</strong> <span id="callerName"></span></p>
+                    <p><strong>Gender:</strong> <span id="gender"></span></p>
+                    <p><strong>Civil Status:</strong> <span id="civilStatus"></span></p>
+                    <p><strong>Age:</strong> <span id="age"></span></p>
+                    <p><strong>Location:</strong> <span id="location"></span></p>
+                    <p><strong>Info Source:</strong> <span id="infoSource"></span></p>
+                    <p><strong>Reason for Calling:</strong> <span id="reason"></span></p>
+                    <p><strong>Intervention:</strong> <span id="intervention"></span></p>
+                    <p><strong>Risk Assessment:</strong> <span id="riskAssessment"></span></p>
+
+                    <hr>
+
+                    <h4>Detailed Call Report (AI Generated)</h4>
+                    <p><strong>Summary:</strong> <span id="aiSummary"></span></p>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
+
+    <script>
+        const rows = document.querySelectorAll('.clickable-row');
+            rows.forEach(row => {
+                row.addEventListener('click', function() {
+                    // Caller data
+                    document.getElementById('callerName').textContent = this.getAttribute('data-caller-name');
+                    document.getElementById('gender').textContent = this.getAttribute('data-gender');
+                    document.getElementById('civilStatus').textContent = this.getAttribute('data-civil-status');
+                    document.getElementById('age').textContent = this.getAttribute('data-age');
+                    document.getElementById('location').textContent = this.getAttribute('data-location');
+                    document.getElementById('infoSource').textContent = this.getAttribute('data-info-source');
+                    document.getElementById('reason').textContent = this.getAttribute('data-reason');
+                    document.getElementById('intervention').textContent = this.getAttribute('data-intervention');
+                    document.getElementById('riskAssessment').textContent = this.getAttribute('data-risk-assessment');
 
 
-</body>
-</html>
+                    // Call session data
+                    document.getElementById('sessionID').textContent = this.getAttribute('data-session-id');
+                    document.getElementById('startTime').textContent = this.getAttribute('data-start-time');
+                    document.getElementById('endTime').textContent = this.getAttribute('data-end-time');
+                    document.getElementById('outcome').textContent = this.getAttribute('data-outcome');
+                    document.getElementById('responder').textContent = this.getAttribute('data-responder');
+
+                    // AI transcript data
+                    document.getElementById('aiSummary').textContent = this.getAttribute('data-ai-summary');
+                });
+            });
+
+    </script>
 
 {% endblock %}

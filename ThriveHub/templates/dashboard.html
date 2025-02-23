@@ -7,8 +7,12 @@
 {% block content %}
 
         <!-- Welcome Message -->
-        <h2 class="section-title">Welcome Jayvee, Ready to save lives?</h2>
-
+        <h2 class="section-title">Welcome,
+            {% if request.user.is_authenticated %}
+                        {{ request.user.first_name|default:"Responder"}} {{ request.user.last_name|default:""}}
+                    {% else %}
+                        Responder
+                    {% endif %}. Ready to save lives?</h2>
 
         <!-- Cards Section -->
         <div class="cards-container">
@@ -17,389 +21,374 @@
                 <div class="chart"><canvas id="reasonsChart"></canvas></div>
             </div>
             <div class="card">
-                <h3>Suicide-related Calls</h3>
+                <h3>Callers</h3>
+                <div class="chart"><canvas id="genderChart"></div>
+            </div>
+            <div class="card">
+                <h3>Risk Assessment</h3>
                 <div class="chart"><canvas id="suicideCallsChart"></div>
             </div>
         </div>
 
+
         <!-- Call Volume Card -->
-        <div class="card call-volume-card">
+        <div class="call-volume-card">
             <h3>Call Volume</h3>
+            <!-- Year Filter Dropdown -->
+            <div class="year-filter">
+                <label for="yearFilter">Select Year:</label>
+                <select id="yearFilter">
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
             <div class="chart"><canvas id="callVolumeChart"></div>
         </div>
 
-        <!-- Referral Contacts Section -->
-        <div class="referral-contacts">
-            <h3>Referral Contacts</h3>
-            <div class="search-container">
-                <i class="fas fa-search search-icon"></i> <!-- Magnifying glass icon -->
-                <input type="text" class="search-bar" placeholder="Search psychologists and psychiatrists">
+</body>
 
-                <!-- Filter Blocks -->
-                <div class="filter-blocks">
-                    <button class="filter active">All</button>
-                    <button class="filter">Male</button>
-                    <button class="filter">Female</button>
-                    <button class="filter">Cebu</button>
-                </div>
-            </div>
-
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Gender</th>
-                    <th>Location</th>
-                    <th>Location</th>
-                </tr>
-                <tr>
-                    <td>Ibrahim Yekeni</td>
-                    <td>Male</td>
-                    <td>Manila</td>
-                    <td>Manila</td>
-                </tr>
-                <tr>
-                    <td>Bridget Olowojie</td>
-                    <td>Female</td>
-                    <td>Cebu</td>
-                    <td>Cebu</td>
-                </tr>
-                <tr>
-                    <td>asdf</td>
-                    <td>asdf</td>
-                    <td>asdf</td>
-                    <td>asdf</td>
-                </tr>
-            </table>
-            <button>Go to Referrals</button>
-        </div>
-    </div>
-
-    <div class="form-container">
-        <h2>Call Information</h2>
-        <label for="session-number">Call Session No:</label>
-        <input type="text" id="session-number" value="TPCB10-XXXX" readonly>
-
-        <label for="call-date">Date:</label>
-        <input type="date" id="call-date">
-
-        <label for="shift">Shift:</label>
-        <select id="shift">
-            <option>06:00 AM - 02:00 PM</option>
-            <option>02:00 PM - 10:00 PM</option>
-            <option>10:00 PM - 06:00 AM</option>
-        </select>
-
-        <label for="time-called">Time Called:</label>
-        <input type="time" id="time-called">
-
-        <label for="time-ended">Time Ended:</label>
-        <input type="time" id="time-ended">
-
-        <h2>Caller Information</h2>
-        <label for="caller-name">Name:</label>
-        <input type="text" id="caller-name" placeholder="Enter Caller's Name">
-
-        <label for="gender">Gender:</label>
-        <select id="gender">
-            <option value="" disabled selected>Select Caller's Gender</option> <!-- Placeholder option -->
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="LGTQ++">LGTQ++</option>
-            <option value="N/A">N/A</option>
-        </select>
-
-        <label for="civil-status">Civil Status:</label>
-        <select id="civil-status">
-            <option value="" disabled selected>Select Caller's Civil Status</option> <!-- Placeholder option -->
-            <option>Single</option>
-            <option>Single (Living in)</option>
-            <option>Married</option>
-            <option>Separated</option>
-            <option>Widowed</option>
-            <option>N/A</option>
-        </select>
-
-        <label for="location">Location:</label>
-        <input type="text" id="location" placeholder="Enter City or Country">
-
-        <button>Summarize</button>
-    </div>
-
-</div>
-
-<!-- Bootstrap and JavaScript libraries -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
-<!-- Charts.js for the graphs -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Reasons Chart
+    const reasonsLabels = {{ reasons_labels|safe }};
+    const reasonsCounts = {{ reasons_counts|safe }};
     const ctx = document.getElementById('reasonsChart');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Relationships', 'Suicidal Crisis', 'Career'],
-                datasets: [{
-                    label: '# of Calls',
-                    data: [2102, 1023, 523],
-                    backgroundColor: ['#038175', '#03695C', '#03A194'],
-                    hoverOffset: 20
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'right', // Position the legend to the right of the chart
-                        align: 'start', // Align the labels to the top (start of the container)
-                        labels: {
-                            font: {
-                                size: 12
-                            },
-                            color: '#034f49',
-                            padding: 15, // Add padding between each label
-                            boxWidth: 12, // Set smaller box width for color legend
-                            boxHeight: 12, // Optional: smaller box height for color legend
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        borderColor: '#FFF',
-                        borderWidth: 1,
-                        bodyFont: {
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: reasonsLabels,
+            datasets: [{
+                label: '# of Calls',
+                data: reasonsCounts,
+                backgroundColor: ['#FFA07A', '#20B2AA', '#87CEFA'],
+                hoverOffset: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right',
+                    align: 'start',
+                    labels: {
+                        font: {
                             size: 14
                         },
-                        titleFont: {
-                            size: 16,
-                            weight: 'bold'
-                        },
+                        color: '#333',
                         padding: 10,
-                        boxPadding: 10
+                        boxWidth: 12,
+                        boxHeight: 12,
                     }
                 },
-                layout: {
-                    padding: {
-                        top: 20,
-                        bottom: 20,
-                    }
-                },
-                cutout: '50%',
-                animation: {
-                    animateScale: true,
-                    animateRotate: true
+                tooltip: {
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderWidth: 1,
+                    bodyFont: {
+                        size: 14
+                    },
+                    titleFont: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: 10
                 }
+            },
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 15
+                }
+            },
+            cutout: '50%',
+            animation: {
+                animateScale: true,
+                animateRotate: true
             }
-        });
+        }
+    });
 
+    // Gender Chart
+    const genderLabels = {{ gender_labels|safe }};
+    const genderCounts = {{ gender_counts|safe }};
+
+    const genderColors = genderLabels.map(label => {
+        if (label === 'Male') {
+            return '#4682B4'; // Blue for Male
+        } else if (label === 'Female') {
+            return '#FF69B4'; // Pink for Female
+        } else if (label === 'LGBTQ++') {
+            return '#FF7F50'; // Coral for LGBTQ
+        } else {
+            return '#D3D3D3'; // Gray for N/A or others
+        }
+    });
 
     const genderCtx = document.getElementById('genderChart');
-        new Chart(genderCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Male', 'Female', 'Prefer Not to Say'],
-                datasets: [{
-                    label: '# of Calls',
-                    data: [1400, 1600, 200,],
-                    backgroundColor: ['#038175', '#03695C', '#03A194'],
-                    hoverOffset: 20
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'right',
-                        align: 'start',
-                        labels: {
-                            font: {
-                                size: 12
-                            },
-                            color: '#034f49',
-                            padding: 15,
-                            boxWidth: 12,
-                            boxHeight: 12,
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        borderColor: '#FFF',
-                        borderWidth: 1,
-                        bodyFont: {
+    new Chart(genderCtx, {
+        type: 'doughnut',
+        data: {
+            labels: genderLabels,
+            datasets: [{
+                label: 'No. of Callers',
+                data: genderCounts,
+                backgroundColor: genderColors,
+                hoverOffset: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right',
+                    align: 'start',
+                    labels: {
+                        font: {
                             size: 14
                         },
-                        titleFont: {
-                            size: 16,
-                            weight: 'bold'
-                        },
+                        color: '#333',
                         padding: 10,
-                        boxPadding: 10
+                        boxWidth: 12,
+                        boxHeight: 12,
+
                     }
                 },
-                layout: {
-                    padding: {
-                        top: 20,
-                        bottom: 20,
-                    }
-                },
-                cutout: '50%',
-                animation: {
-                    animateScale: true,
-                    animateRotate: true
+                tooltip: {
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    borderWidth: 1,
+                    bodyFont: {
+                        size: 14
+                    },
+                    titleFont: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: 10
                 }
+            },
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 15
+                }
+            },
+            cutout: '50%',
+            animation: {
+                animateScale: true,
+                animateRotate: true
             }
-        });
+        }
+    });
+
+    // Suicide-Related Calls Chart
+    const riskLabels = {{ risk_labels|safe }};
+    const riskCounts = {{ risk_counts|safe }};
+
+    const riskColors = riskLabels.map(label => {
+        if (label === 'High Risk') {
+            return '#FF6F61';
+        } else if (label === 'Moderate Risk') {
+            return '#4682B4';
+        } else {
+            return '#A9A9A9';
+        }
+    });
 
     const suicideCtx = document.getElementById('suicideCallsChart');
-        new Chart(suicideCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Depression', 'Self-harm Intent', 'Family Issues'],
-                datasets: [{
-                    label: '# of Suicide-Related Calls',
-                    data: [800, 600, 450],
-                    backgroundColor: ['#038175', '#03695C', '#03A194'],
-                    hoverOffset: 20
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'right',
-                        align: 'start',
-                        labels: {
-                            font: {
-                                size: 12
-                            },
-                            color: '#038175',
-                            padding: 15,
-                            boxWidth: 12,
-                            boxHeight: 12,
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        borderColor: '#FFF',
-                        borderWidth: 1,
-                        bodyFont: {
+    new Chart(suicideCtx, {
+        type: 'pie',
+        data: {
+            labels: riskLabels,
+            datasets: [{
+                label: 'No. of Calls',
+                data: riskCounts,
+                backgroundColor: riskColors,
+                hoverOffset: 20
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'right',
+                    align: 'start',
+                    labels: {
+                        font: {
                             size: 14
                         },
-                        titleFont: {
-                            size: 16,
-                            weight: 'bold'
-                        },
-                        padding: 10,
-                        boxPadding: 10
+                        color: '#333',
+                        padding: 15,
+                        boxWidth: 12,
+                        boxHeight: 12,
                     }
                 },
-                layout: {
-                    padding: {
-                        top: 20,
-                        bottom: 20,
-                    }
-                },
-                animation: {
-                    animateScale: true,
-                    animateRotate: true
-                }
-            }
-        });
-
-
-    const callVolumeCtx = document.getElementById('callVolumeChart');
-        new Chart(callVolumeCtx, {
-            type: 'bar',
-            data: {
-                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October'],
-                datasets: [{
-                    label: 'Call Volume',
-                    data: [300, 450, 380, 500, 620, 700, 650, 780, 820, 900],
-                    backgroundColor: '#038175', // Set a single color for all bars
+                tooltip: {
+                    backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
                     borderWidth: 1,
-                }]
+                    bodyFont: {
+                        size: 14
+                    },
+                    titleFont: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: 10
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top', // Display legend at the top
-                        labels: {
-                            font: {
+            layout: {
+                padding: {
+                    top: 15,
+                    bottom: 15
+                }
+            },
+            animation: {
+                animateScale: true,
+                animateRotate: true
+            }
+        }
+    });
+
+    // Call Volume Chart
+    const monthLabels = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const callsData = JSON.parse('{{ calls_per_month|escapejs }}');
+
+    // Group data by year
+    const callsByYear = {};
+    callsData.forEach(item => {
+        const year = item.year;
+        if (!callsByYear[year]) {
+            callsByYear[year] = Array(12).fill(0); // Initialize an array with 12 zeros (one for each month)
+        }
+        callsByYear[year][item.month - 1] = item.call_count; // Fill in the call count for the corresponding month
+    });
+
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+
+    // Populate the year filter dropdown
+    const yearFilter = document.getElementById('yearFilter');
+    Object.keys(callsByYear).forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearFilter.appendChild(option);
+    });
+
+    // Set the default year to the current year
+    yearFilter.value = currentYear;
+
+    // Initialize the chart
+    let callVolumeChart;
+    function renderChart(selectedYear) {
+        const dataset = {
+            label: selectedYear,
+            data: callsByYear[selectedYear] || Array(12).fill(0), // Use the selected year's data or default to zeros
+            backgroundColor: 'rgba(100, 181, 246, 0.8)',
+            hoverBackgroundColor: 'rgba(100, 181, 246, 1))',
+            borderColor: 'rgba(100, 181, 246, 1)',
+            borderWidth: 1
+        };
+
+        const callVolumeCtx = document.getElementById('callVolumeChart').getContext('2d');
+        if (callVolumeChart) {
+            // Update the existing chart
+            callVolumeChart.data.datasets = [dataset];
+            callVolumeChart.update();
+        } else {
+            // Render a new chart
+            callVolumeChart = new Chart(callVolumeCtx, {
+                type: 'bar',
+                data: {
+                    labels: monthLabels,
+                    datasets: [dataset]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14
+                                },
+                                color: '#333',
+                                padding: 10
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                            borderColor: 'rgba(255, 255, 255, 0.5)',
+                            borderWidth: 1,
+                            bodyFont: {
                                 size: 14
                             },
-                            color: '#034f49',
-                            padding: 10,
+                            titleFont: {
+                                size: 16,
+                                weight: 'bold'
+                            },
+                            padding: 10
                         }
                     },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        borderColor: '#FFF',
-                        borderWidth: 1,
-                        bodyFont: {
-                            size: 14
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#333',
+                                font: {
+                                    size: 12
+                                }
+                            }
                         },
-                        titleFont: {
-                            size: 16,
-                            weight: 'bold'
-                        },
-                        padding: 10,
-                    }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: {
-                            display: false // Remove grid lines for the x-axis for a cleaner look
-                        },
-                        ticks: {
-                            font: {
-                                size: 12
+                        y: {
+                            grid: {
+                                color: '#E0E0E0'
+                            },
+                            ticks: {
+                                color: '#333',
+                                font: {
+                                    size: 12
+                                },
+                                stepSize: 20
                             }
                         }
                     },
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: '#e0e0e0', // Light gray color for the y-axis grid lines
-                        },
-                        ticks: {
-                            font: {
-                                size: 12
-                            },
-                            stepSize: 100 // Set step size for y-axis to make it easier to read
+                    layout: {
+                        padding: {
+                            top: 30,
+                            bottom: 30,
+                            left: 25,
+                            right: 25
                         }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutBounce'
                     }
-                },
-                layout: {
-                    padding: {
-                        top: 20,
-                        bottom: 20,
-                        left: 20,
-                        right: 20,
-                    }
-                },
-                animation: {
-                    duration: 1000, // Animation duration for bar drawing
-                    easing: 'easeOutBounce', // Easing function for a smoother effect
                 }
-            }
-        });
+            });
+        }
+    }
 
+    // Render the chart for the default year (current year)
+    renderChart(currentYear);
 
-
-
+    // Add event listener to the year filter dropdown
+    yearFilter.addEventListener('change', (event) => {
+        const selectedYear = event.target.value;
+        renderChart(selectedYear);
+    });
 </script>
 
-
-
-</body>
 </html>
 
 {% endblock %}

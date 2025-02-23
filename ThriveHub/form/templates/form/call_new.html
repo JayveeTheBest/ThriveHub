@@ -1,0 +1,45 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block content %}
+
+        <!-- Welcome Message -->
+        <h2 class="section-title">Add Call</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <!-- Call Form Section -->
+            <div class="full-form-container">
+                <h5>Call Information</h5>
+                <label for="session-number">Call Session No: {{ formatted_session_id }}</label>
+                <br><br>
+                {{ session_form.as_p }}
+            <hr>
+                <h5>Caller Information</h5>
+                {% for field in caller_form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in field.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+                <button type="submit" class="btn btn-lg def-btn">
+                <i class="fa-solid fa-bolt" aria-hidden="true" style="margin-right: 5px;"></i> Submit
+            </button>
+        </form>
+    </div>
+</div>
+
+
+</body>
+</html>
+
+{% endblock %}
