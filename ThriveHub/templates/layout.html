@@ -74,8 +74,10 @@
         <!-- Header -->
         <div class="header">
             <div class="search-container">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-bar" placeholder="Search callers, psychologists, and psychiatrists">
+                <form action="{% url 'search_results' %}" method="GET" class="d-flex" style="width: 100%;">
+                    <button type="submit" class="fas fa-search search-icon" style="border-style: none; background-color: transparent;"></button>
+                    <input type="text" name="q" class="search-bar" placeholder="Search callers, psychologists, and psychiatrists" required>
+                </form>
 
                 <a href="{% url 'AddCall' %}" class="btn btn-sm def-btn add-call-btn">
                     <i class="fa-solid fa-plus"></i>

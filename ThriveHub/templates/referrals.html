@@ -1,85 +1,61 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Call Reports
+    Referral Contacts
 {% endblock %}
 
 {% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="section-title">Referral Contacts</h2>
+        <a href="{% url 'add_referral' %}" class="btn btn-sm def-btn" style="margin-left: auto;">
+            <i class="fa-solid fa-plus"></i> Add Contact
+        </a>
 
-        {% block referral_table %}
-        <!-- Welcome Message -->
-        <div class="container mt-4">
-            <div class="row align-items-center">
-                <div class="col-4">
-                    <h2 class="section-title"> Referral Contacts
-                        <a href="{% url 'add_referral' %}" class="btn btn-sm def-btn">
-                            <i class="fa-solid fa-plus"></i>
-                        </a>
-                    </h2>
+    </div>
+
+
+
+    <!-- Contact List -->
+    <div class="row g-3">
+        {% for contact in contacts %}
+        <div class="col-md-4 mb-3">
+            <div class="card-contact h-100">
+                <div class="card-body">
+                    <h5 class="card-title d-flex justify-content-between align-items-center">
+                        {{ contact.name }}
+                        {% if contact.gender == "Male" %}
+                            <i class="fa-solid fa-mars mars-icon"></i>
+                        {% elif contact.gender == "Female" %}
+                            <i class="fa-solid fa-venus venus-icon"></i>
+                        {% endif %}
+                    </h5>
+                    <p class="card-text"><i class="fa-solid fa-location-dot"></i> {{ contact.location }}</p>
+                    <p class="card-text"><i class="fa-solid fa-phone"></i> <a href="tel:{{ contact.phone }}">{{ contact.phone }}</a></p>
+                    <p class="card-text"><i class="fa-solid fa-envelope"></i> <a href="mailto:{{ contact.email }}">{{ contact.email }}</a></p>
+                    <p class="card-text text-muted small">Last Updated: {{ contact.date_updated }}</p>
+                    <a href="{% url 'edit_referral' contact.pk %}" class="btn btn-sm def-btn">Edit</a>
+                    <a href="{% url 'delete_referral' contact.pk %}" class="btn btn-sm btn-danger">Delete</a>
                 </div>
-
-                <div class="col-8">
-                <form method="GET" class="d-flex justify-content-end">
-                    <input type="text" name="search" placeholder="Search by name" value="{{ request.GET.search }}">
-                    <select name="gender" class="form-select" aria-label="Gender">
-                        <option value="All" {% if request.GET.gender == "All" %}selected{% endif %}> All Gender </option>
-                        <option value="Male" {% if request.GET.gender == "Male" %}selected{% endif %}> Male </option>
-                        <option value="Female" {% if request.GET.gender == "Female" %}selected{% endif %}> Female </option>
-                    </select>
-                    <input type="text" name="location" placeholder="Filter by location" value="{{ request.GET.location }}">
-                    <button class="btn def-btn" type="submit">Filter</button>
-                </form>
-                </div>
-
             </div>
-
-        <div class="table-container">
-            <table class="styled-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Gender</th>
-                        <th>Location</th>
-                        <th>Phone Number</th>
-                        <th>Email Address</th>
-                        <th>Last Updated</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for contact in contacts %}
-                    <tr class="contact-row" data-href="{% url 'edit_referral' contact.pk %}">
-                        <td>{{ contact.name }}</td>
-                        <td>{{ contact.gender }}</td>
-                        <td>{{ contact.location }}</td>
-                        <td>{{ contact.phone }}</td>
-                        <td>{{ contact.email }}</td>
-                        <td>{{ contact.date_updated }}</td>
-                        <td class="delete-icon-cell">
-                            <a href="{% url 'delete_referral' contact.pk %}" class="delete-icon"><i class="fa fa-trash"></i></a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
         </div>
-
-        <script>
-            // Make the entire row clickable to edit
-            document.querySelectorAll('.contact-row').forEach(row => {
-                row.addEventListener('click', function() {
-                    window.location = row.getAttribute('data-href');
-                });
-            });
-        </script>
-        {% endblock %}
-
+        {% empty %}
+        <div class="col-12 text-center">
+            <p class="text-muted">No referral contacts found.</p>
         </div>
+        {% endfor %}
     </div>
 </div>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let filterToggle = document.getElementById("filter-toggle");
+        let filterSection = document.getElementById("filter-section");
 
-</body>
-</html>
+        filterToggle.addEventListener("click", function() {
+            filterSection.style.display = (filterSection.style.display === "none" || filterSection.style.display === "") ? "block" : "none";
+        });
+    });
+</script>
 
 {% endblock %}

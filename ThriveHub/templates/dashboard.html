@@ -22,11 +22,11 @@
             </div>
             <div class="card">
                 <h3>Callers</h3>
-                <div class="chart"><canvas id="genderChart"></div>
+                <div class="chart"><canvas id="genderChart"></canvas></div>
             </div>
             <div class="card">
                 <h3>Risk Assessment</h3>
-                <div class="chart"><canvas id="suicideCallsChart"></div>
+                <div class="chart"><canvas id="suicideCallsChart"></canvas></div>
             </div>
         </div>
 
@@ -290,7 +290,7 @@
             label: selectedYear,
             data: callsByYear[selectedYear] || Array(12).fill(0), // Use the selected year's data or default to zeros
             backgroundColor: 'rgba(100, 181, 246, 0.8)',
-            hoverBackgroundColor: 'rgba(100, 181, 246, 1))',
+            hoverBackgroundColor: 'rgba(100, 181, 246, 1)',
             borderColor: 'rgba(100, 181, 246, 1)',
             borderWidth: 1
         };

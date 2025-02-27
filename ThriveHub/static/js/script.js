@@ -56,5 +56,16 @@
         // Send updated summary to the server
     }
 
+    document.addEventListener("DOMContentLoaded", function() {
+        let links = document.querySelectorAll(".nav-link");
+        let currentPath = window.location.pathname.replace(/\/$/, ""); // Remove trailing slash if present
 
+        links.forEach(link => {
+            let linkPath = new URL(link.href).pathname.replace(/\/$/, ""); // Normalize link href
+
+            if (currentPath === linkPath) {
+                link.classList.add("active");
+            }
+        });
+    });
 

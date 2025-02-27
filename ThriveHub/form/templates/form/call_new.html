@@ -7,34 +7,167 @@
 {% block content %}
 
         <!-- Welcome Message -->
-        <h2 class="section-title">Add Call</h2>
+        <h2 class="section-title">Call Session No: {{ formatted_session_id }}</h2>
         <form method="POST">
             {% csrf_token %}
             <!-- Call Form Section -->
             <div class="full-form-container">
-                <h5>Call Information</h5>
-                <label for="session-number">Call Session No: {{ formatted_session_id }}</label>
-                <br><br>
-                {{ session_form.as_p }}
-            <hr>
-                <h5>Caller Information</h5>
-                {% for field in caller_form %}
-            <div class="form-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.errors %}
-                    <div class="alert alert-danger" role="alert">
-                        {% for error in field.errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
+                <!-- Start Time and End Time in the first row -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ session_form.startTime.id_for_label }}">Start Time</label>
+                            {{ session_form.startTime }}
+                        </div>
                     </div>
-                {% endif %}
-            </div>
-        {% endfor %}
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ session_form.endTime.id_for_label }}">End Time</label>
+                            {{ session_form.endTime }}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <!-- Row 1: Caller Name and Location -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ caller_form.callerName.id_for_label }}">Caller Name</label>
+                            {{ caller_form.callerName }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ caller_form.location.id_for_label }}">Location</label>
+                            {{ caller_form.location }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Gender, Civil Status, and Age -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ caller_form.gender.id_for_label }}">Gender</label>
+                            {{ caller_form.gender }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ caller_form.civilStatus.id_for_label }}">Civil Status</label>
+                            {{ caller_form.civilStatus }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ caller_form.age.id_for_label }}">Age</label>
+                            {{ caller_form.age }}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <!-- Row 3: Reason for Calling and Information Source -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ caller_form.reason.id_for_label }}">Reason for Calling</label>
+                            {{ caller_form.reason }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ caller_form.infoSource.id_for_label }}">Information Source</label>
+                            {{ caller_form.infoSource }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 3.1: Patient and Representative (Initially Hidden) -->
+                <div class="row" id="patient_representative_section" style="display: none;">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ patient_form.patient.id_for_label }}">Patient</label>
+                            {{ patient_form.name }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ representative_form.organization.id_for_label }}">Representative Organization</label>
+                            {{ representative_form.organization }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ representative_form.patientRelationship.id_for_label }}">Relationship</label>
+                            {{ representative_form.patientRelationship }}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <!-- Row 4: Risk Assessment and Intervention -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ caller_form.riskAssessment.id_for_label }}">Risk Assessment</label>
+                            {{ caller_form.riskAssessment }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ caller_form.intervention.id_for_label }}">Intervention</label>
+                            {{ caller_form.intervention }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ session_form.outcome.id_for_label }}">Outcome</label>
+                            {{ session_form.outcome }}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+                <!-- Row 6: Additional Notes -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="{{ session_form.notes.id_for_label }}">Additional Notes</label>
+                            {{ session_form.notes }}
+                        </div>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-lg def-btn">
-                <i class="fa-solid fa-bolt" aria-hidden="true" style="margin-right: 5px;"></i> Submit
-            </button>
+                    <i class="fa-solid fa-bolt" aria-hidden="true" style="margin-right: 5px;"></i> Generate Summary
+                </button>
+            </div>
         </form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let reasonField = document.getElementById("{{ caller_form.reason.auto_id }}");
+        let patientRepSection = document.getElementById("patient_representative_section");
+
+        function toggleFields() {
+            if (reasonField.value && reasonField.value === "Calling for another person") {
+                patientRepSection.style.display = "flex";
+            } else {
+                patientRepSection.style.display = "none";
+            }
+        }
+
+        // Run on page load
+        toggleFields();
+
+        // Run when the reason field changes
+        reasonField.addEventListener("change", toggleFields);
+    });
+
+</script>
     </div>
 </div>
 

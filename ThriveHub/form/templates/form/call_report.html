@@ -5,152 +5,220 @@
 {% endblock %}
 
 {% block content %}
-    <!-- Welcome Message -->
-    <div>
-        <h2 class="section-title mb-4">
-            Summary of Information
-            <a href="{% url 'AddCall' %}" class="btn btn-sm def-btn">
-                <i class="fa-solid fa-plus"></i>
-            </a>
-            <a href="{% url 'Export' %}?start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&responder={{ filters.responder }}&caller_type={{ filters.caller_type }}" class="btn btn-sm def-btn">
-    <i class="fa-solid fa-download"></i>
-</a>
-        </h2>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="section-title mb-4"> Summary of Information </h2>
+        <a href="{% url 'Export' %}?start_date={{ filters.start_date }}&end_date={{ filters.end_date }}&responder={{ filters.responder }}&caller_type={{ filters.caller_type }}" class="btn btn-sm def-btn" style="margin-left: auto;">
+                <i class="fa-solid fa-download"></i> Download Report </a>
+    </div>
 
-        <!-- Display a message if no calls are logged -->
         {% if not callSession %}
             <div class="alert alert-info" role="alert">
                 No calls logged. <a href="{% url 'AddCall' %}" class="alert-link">Start logging your calls now.</a>
             </div>
         {% else %}
 
-
-        <div class="table-container">
-            <table class="styled-table">
+        <div class="table-container" style="text-align: center;">
+            <table class="styled-table" style="text-align: center;">
                 <thead>
                     <tr>
-                        <th>Session ID</th>
-                        <th>Call Duration</th>
-                        <th>Caller Name</th>
-                        <th>Gender</th>
-                        <th>Civil Status</th>
-                        <th>Age</th>
-                        <th>Location</th>
-                        <th>Info Source</th>
-                        <th>Reasons for Calling</th>
-                        <th>Intervention</th>
-                        <th>Risk Assessment</th>
-                        <th>Responder</th>
+                        <th style="text-align: center;">Session ID</th>
+                        <th style="text-align: center;">Call Duration</th>
+                        <th style="text-align: center;">Gender</th>
+                        <th style="text-align: center;">Age</th>
+                        <th style="text-align: center;">Risk Level</th>
+                        <th style="text-align: center;">Intervention</th>
+                        {% if user.is_superuser %}
+                            <th style="text-align: center;">Responder</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for session in callSession %}
                     <tr class="clickable-row" data-bs-toggle="modal" data-bs-target="#detailsModal"
-                        data-session-id="{{ formatted_session_id }}"
+                        data-session-id="{{ session.sessionID }}"
                         data-start-time="{{ session.startTime }}"
                         data-end-time="{{ session.endTime }}"
+                        data-duration="{{ session.duration }}"
                         data-caller-name="{{ session.caller.callerName }}"
                         data-gender="{{ session.caller.gender }}"
                         data-civil-status="{{ session.caller.civilStatus }}"
                         data-age="{{ session.caller.age }}"
                         data-location="{{ session.caller.location }}"
                         data-info-source="{{ session.caller.infoSource }}"
-                        data-caller-type="{{ session.caller.reason }}"
-                        data-intervention="{{ session.caller.intervention }}"
                         data-risk-assessment="{{ session.caller.riskAssessment }}"
+                        data-intervention="{{ session.caller.intervention }}"
+                        data-reason="{{ session.caller.reason }}"
                         data-ai-summary="{{ session.transcript.transcriptSummary }}"
-                        data-responder=" {{session.responder }}">
+                        {% if user.is_superuser %}data-responder="{{ session.responder }}"{% endif %}>
 
                         <td>TPCB24-00{{ session.sessionID }}</td>
                         <td>{{ session.duration }}</td>
-                        <td>{{ session.caller.callerName }}</td>
                         <td>{{ session.caller.gender }}</td>
-                        <td>{{ session.caller.civilStatus }}</td>
                         <td>{{ session.caller.age }}</td>
-                        <td>{{ session.caller.location }}</td>
-                        <td>{{ session.caller.infoSource }}</td>
-                        <td>{{ session.caller.reason }}</td>
+                        <td>
+                            {% if session.caller.riskAssessment == "High Risk" %}
+                                <span style="display: inline-block; width: 16px; height: 16px; background-color: #D64545; border-radius: 50%;"></span>
+                            {% elif session.caller.riskAssessment == "Moderate Risk" %}
+                                <span style="display: inline-block; width: 16px; height: 16px; background-color: #F4A259; border-radius: 50%;"></span>
+                            {% else %}
+                                <span style="display: inline-block; width: 16px; height: 16px; background-color: #54B689; border-radius: 50%;"></span>
+                            {% endif %}
+                        </td>
                         <td>{{ session.caller.intervention }}</td>
-                        <td>{{ session.caller.riskAssessment }}</td>
-                        <td>{{ session.responder }}</td>
+                        {% if user.is_superuser %}
+                            <td>{{ session.responder }}</td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
 
+            <!-- Pagination Controls -->
+            <div class="pagination-container">
+                <span class="step-links">
+                    {% if callSession.has_previous %}
+                        <a href="?page=1">&laquo; First</a>
+                        <a href="?page={{ callSession.previous_page_number }}">Previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ callSession.number }} of {{ callSession.paginator.num_pages }}.
+                    </span>
+
+                    {% if callSession.has_next %}
+                        <a href="?page={{ callSession.next_page_number }}">Next</a>
+                        <a href="?page={{ callSession.paginator.num_pages }}">Last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+
         </div>
         {% endif %}
     </div>
 
-    <!-- Modal for displaying detailed information -->
-    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="detailsModalLabel">Detailed Report</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                        <i class="fa fa-close"></i>
-                    </button>
+    <!-- Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Call Session Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="fa fa-close"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <!-- Two-Column Layout for Key Info -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><strong style="color: #038175;">Session Details</h5></strong>
+                        <p><strong>Session ID:</strong> <span id="sessionID"></span></p>
+                        <p><strong>Duration:</strong> <span id="duration"></span></p>
+                        <p><strong>Responder:</strong> <span id="responder"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><strong style="color: #038175;">Call Details</h5></strong>
+                        <p><strong>Reason:</strong> <span id="reason"></span></p>
+                        <p><strong>Intervention:</strong> <span id="intervention"></span></p>
+                        <p><strong>Risk Level:</strong> <span id="riskIndicator" class="risk-circle"></span></p>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <h4>Session Information</h4>
-                    <p><strong>Session ID:</strong> <span id="sessionID"></span></p>
-                    <p><strong>Start Time:</strong> <span id="startTime"></span></p>
-                    <p><strong>End Time:</strong> <span id="endTime"></span></p>
-                    <p><strong>Outcome:</strong> <span id="outcome"></span></p>
-                    <p><strong>Responder:</strong> <span id="responder"></span></p>
 
+
+
+                <!-- Collapsible Caller Info -->
+                <div id="callerDetails" style="display: none; margin-top: 20px;">
+                    <h5><strong style="color: #038175;">Caller Information</h5></strong>
                     <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Gender:</strong> <span id="gender"></span></p>
+                            <p><strong>Civil Status:</strong> <span id="civilStatus"></span></p>
+                            <p><strong>Age:</strong> <span id="age"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Location:</strong> <span id="location"></span></p>
+                            <p><strong>Caller Name:</strong> <span id="callerName"></span></p>
+                            <p><strong>Info Source:</strong> <span id="infoSource"></span></p>
+                        </div>
+                    </div>
 
-                    <h4>Caller Information</h4>
-                    <p><strong>Name:</strong> <span id="callerName"></span></p>
-                    <p><strong>Gender:</strong> <span id="gender"></span></p>
-                    <p><strong>Civil Status:</strong> <span id="civilStatus"></span></p>
-                    <p><strong>Age:</strong> <span id="age"></span></p>
-                    <p><strong>Location:</strong> <span id="location"></span></p>
-                    <p><strong>Info Source:</strong> <span id="infoSource"></span></p>
-                    <p><strong>Reason for Calling:</strong> <span id="reason"></span></p>
-                    <p><strong>Intervention:</strong> <span id="intervention"></span></p>
-                    <p><strong>Risk Assessment:</strong> <span id="riskAssessment"></span></p>
-
+                <!-- AI Summary -->
+                <div style="margin-top: 20px;">
+                    <h5><strong style="color: #038175;">AI-Generated Summary</h5></strong>
                     <hr>
-
-                    <h4>Detailed Call Report (AI Generated)</h4>
-                    <p><strong>Summary:</strong> <span id="aiSummary"></span></p>
+                        <p id="aiSummary"></p>
                 </div>
 
             </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button id="toggleCallerInfo" class="btn btn-sm btn-outline-success">Show More</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
+</div>
 
-    <script>
-        const rows = document.querySelectorAll('.clickable-row');
-            rows.forEach(row => {
-                row.addEventListener('click', function() {
-                    // Caller data
-                    document.getElementById('callerName').textContent = this.getAttribute('data-caller-name');
-                    document.getElementById('gender').textContent = this.getAttribute('data-gender');
-                    document.getElementById('civilStatus').textContent = this.getAttribute('data-civil-status');
-                    document.getElementById('age').textContent = this.getAttribute('data-age');
-                    document.getElementById('location').textContent = this.getAttribute('data-location');
-                    document.getElementById('infoSource').textContent = this.getAttribute('data-info-source');
-                    document.getElementById('reason').textContent = this.getAttribute('data-reason');
-                    document.getElementById('intervention').textContent = this.getAttribute('data-intervention');
-                    document.getElementById('riskAssessment').textContent = this.getAttribute('data-risk-assessment');
+<!-- JavaScript for Interactions -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const rows = document.querySelectorAll(".clickable-row");
+        rows.forEach(row => {
+            row.addEventListener("click", function () {
+                // Populate Session Info
+                document.getElementById("sessionID").textContent = this.getAttribute("data-session-id");
+                document.getElementById("duration").textContent = this.getAttribute("data-duration");
+                document.getElementById("responder").textContent = this.getAttribute("data-responder");
 
+                // Populate Call Details
+                document.getElementById("reason").textContent = this.getAttribute("data-reason");
+                document.getElementById("intervention").textContent = this.getAttribute("data-intervention");
 
-                    // Call session data
-                    document.getElementById('sessionID').textContent = this.getAttribute('data-session-id');
-                    document.getElementById('startTime').textContent = this.getAttribute('data-start-time');
-                    document.getElementById('endTime').textContent = this.getAttribute('data-end-time');
-                    document.getElementById('outcome').textContent = this.getAttribute('data-outcome');
-                    document.getElementById('responder').textContent = this.getAttribute('data-responder');
+                // Handle Risk Level Color
+                let riskLevel = this.getAttribute("data-risk-assessment");
+                let riskIndicator = document.getElementById("riskIndicator");
+                riskIndicator.style.backgroundColor = getRiskColor(riskLevel);
 
-                    // AI transcript data
-                    document.getElementById('aiSummary').textContent = this.getAttribute('data-ai-summary');
-                });
+                // AI Summary
+                document.getElementById("aiSummary").textContent = this.getAttribute("data-ai-summary");
+
+                // Caller Info (Hidden Initially)
+                document.getElementById("callerName").textContent = this.getAttribute("data-caller-name");
+                document.getElementById("gender").textContent = this.getAttribute("data-gender");
+                document.getElementById("civilStatus").textContent = this.getAttribute("data-civil-status");
+                document.getElementById("age").textContent = this.getAttribute("data-age");
+                document.getElementById("location").textContent = this.getAttribute("data-location");
+                document.getElementById("infoSource").textContent = this.getAttribute("data-info-source");
             });
+        });
 
-    </script>
+        // Toggle Caller Details for Privacy
+        document.getElementById("toggleCallerInfo").addEventListener("click", function () {
+            let details = document.getElementById("callerDetails");
+            if (details.style.display === "none") {
+                details.style.display = "block";
+                this.textContent = "Hide Details";
+            } else {
+                details.style.display = "none";
+                this.textContent = "Show More";
+            }
+        });
+
+        // Function to Return Risk Level Colors
+        function getRiskColor(level) {
+            switch (level.toLowerCase()) {
+                case "high risk": return "red";
+                case "moderate risk": return "orange";
+                case "low risk": return "green";
+                default: return "gray";
+            }
+        }
+    });
+</script>
 
 {% endblock %}

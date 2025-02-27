@@ -3,8 +3,9 @@ from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils.timezone import now
-from .models import Caller, CallSession, AITranscript
-from .forms import AddCall, AddCallSession
+from django.core.paginator import Paginator
+from .models import Caller, CallSession, AITranscript, Patient, Representative
+from .forms import AddCall, AddCallSession, AddPatientForm, AddRepresentativeForm
 from groq import Groq
 from .config import GROQ_API_KEY
 from datetime import datetime, timedelta
@@ -53,9 +54,14 @@ def callReports(request):
         # Calculate duration
         session.duration = end_datetime - start_datetime
 
+        # Pagination: Show 10 records per page
+        paginator = Paginator(callSession, 10)  # Adjust page size if needed
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
     return render(request, 'form/call_report.html', {
         'caller': caller,
-        'callSession': callSession})
+        'callSession': page_obj})
 
 
 @login_required
@@ -120,42 +126,45 @@ def exportCallReports(request):
 
 
 def addCall(request):
-    # Get the current year's last two digits
-    current_year = datetime.now().year % 100  # e.g., 2024 -> 24
+    current_year = datetime.now().year % 100  # Get the last two digits of the year
 
-    # Get the last sessionID for the current year
+    # Get the last session ID of the current year
     last_session = CallSession.objects.filter(callDate__year=datetime.now().year).aggregate(Max('sessionID'))
     last_session_id = last_session['sessionID__max']
 
-    if last_session_id:
-        # Increment the last sessionID
-        next_session_id = last_session_id + 1
-    else:
-        # If no sessions exist for the current year, start from 1
-        next_session_id = 1
-
-    # Format the sessionID for display
+    # Generate the next session ID
+    next_session_id = last_session_id + 1 if last_session_id else 1
     formatted_session_id = f'TPCB{current_year}-{next_session_id:04}'
 
     if request.method == 'POST':
         caller_form = AddCall(request.POST)
         session_form = AddCallSession(request.POST)
+        patient_form = AddPatientForm(request.POST)
+        representative_form = AddRepresentativeForm(request.POST)
 
-        if caller_form.is_valid() and session_form.is_valid():
+        if (
+            caller_form.is_valid()
+            and session_form.is_valid()
+            and patient_form.is_valid()
+            and representative_form.is_valid()
+        ):
             try:
-                # Save Caller
                 caller = caller_form.save()
+
+                # Save Patient
+                patient = patient_form.save()
+
+                # Save Representative (ensure the Representative model has a `patient` field)
+                representative = representative_form.save(commit=False)
+                representative.patient = patient
+                representative.save()
 
                 # Save Call Session
                 session = session_form.save(commit=False)
                 session.caller = caller
-                session.sessionID = next_session_id  # Assign the calculated session ID
+                session.sessionID = next_session_id
                 session.responder = request.user
                 session.save()
-
-                # Log saved data for debugging
-                print(f"Caller Info: {caller}")
-                print(f"Session Info: {session}")
 
                 # Generate summary using Groq API
                 chat_completion_text = generate_summary_with_groq(caller, session)
@@ -168,42 +177,50 @@ def addCall(request):
                 )
 
                 messages.success(request, "Call successfully logged and summary generated.")
-                return redirect('SummaryPage', session_id=next_session_id)
+                return redirect('SummaryPage', session_id=session.sessionID)
 
             except Exception as e:
-                # Handle unexpected errors
                 print(f"Error while saving call or generating summary: {e}")
-                messages.error(request,
-                               "An error occurred while saving the call or generating the summary. Please try again.")
+                messages.error(request, "An error occurred. Please try again.")
+
         else:
-            # Debug form errors
             print("Caller Form Errors:", caller_form.errors)
             print("Session Form Errors:", session_form.errors)
+            print("Patient Form Errors:", patient_form.errors)
+            print("Representative Form Errors:", representative_form.errors)
             messages.error(request, "Please correct the errors in the form.")
-    else:
-        # Initial empty forms
-        caller_form = AddCall()
-        session_form = AddCallSession()
 
-    # Render the form page
+    else:
+        caller_form = AddCall()
+        session_form = AddCallSession(initial={'startTime': datetime.now().strftime('%H:%M')})
+        patient_form = AddPatientForm()
+        representative_form = AddRepresentativeForm()
+
     context = {
         'caller_form': caller_form,
         'session_form': session_form,
+        'patient_form': patient_form,
+        'representative_form': representative_form,
         'formatted_session_id': formatted_session_id,
     }
     return render(request, 'form/call_new.html', context)
 
 
-def generate_summary_with_groq(caller, session):
+def generate_summary_with_groq(caller, session, patient=None, representative=None):
     try:
-        # Validate inputs
-        print("Caller Details:")
-        for field in caller._meta.fields:
-            print(f"{field.name}: {getattr(caller, field.name)}")
+        # Debug: Print variable types
+        print(
+            f"caller: {type(caller)}, session: {type(session)}, patient: {type(patient)}, representative: {type(representative)}")
 
-        print("\nSession Details:")
-        for field in session._meta.fields:
-            print(f"{field.name}: {getattr(session, field.name)}")
+        # Ensure required objects are not None
+        if caller is None:
+            raise ValueError("Caller object is None")
+        if session is None:
+            raise ValueError("Session object is None")
+        if patient is None:
+            print("Warning: Patient object is None")
+        if representative is None:
+            print("Warning: Representative object is None")
 
         # Construct the prompt
         prompt = (
@@ -225,10 +242,33 @@ def generate_summary_with_groq(caller, session):
             f"Session End Time: {session.endTime}\n"
             f"Outcome: {session.outcome}\n"
             f"Additional Notes: {session.notes}\n"
+        )
+
+        # Include Patient details only if available
+        if patient:
+            prompt += (
+                f"Patient Name: {patient.name}\n"
+            )
+
+        # Include Representative details only if available
+        if representative:
+            prompt += (
+                f"Representative's Organization: {representative.organization}\n"
+                f"Relationship to the Patient: {representative.patientRelationship}\n"
+            )
+
+        prompt += (
+            f"Intervention: {caller.intervention}\n"
+            f"Risk Assessment: {caller.riskAssessment}\n\n"
+            f"Session Start Time: {session.startTime}\n"
+            f"Session End Time: {session.endTime}\n"
+            f"Outcome: {session.outcome}\n"
+            f"Additional Notes: {session.notes}\n"
             f"Ensure the summary is clear, professional, and free from extraneous content. No need to include Session "
             f"Start Time, Session Date, or anything related to call date and time, and the phrase 'Here is a concise "
             f"and well-structured call report summary'."
         )
+
         print("Generated Prompt:")
         print(prompt)
 

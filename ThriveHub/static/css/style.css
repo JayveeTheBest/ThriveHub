@@ -42,6 +42,7 @@
 /* Show the logo when collapsed */
 .sidebar.collapsed .sidebar-logo {
     display: block; /* Show logo when collapsed */
+    margin-left: -10px;
 }
 
 .sidebar.collapsed .sidebar-title {
@@ -145,7 +146,7 @@
 }
 
 .sidebar a i {
-    margin-right: 10px; /* Space between icon and text */
+    /* margin-right: 10px; /* Space between icon and text */
 }
 
 .sidebar a:hover {
@@ -267,6 +268,26 @@
     padding: 20px;
     flex: 1 1 calc(20% - 20px); /* Allow 3 cards in a row */
     width: 20%;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Increase shadow on hover */
+}
+
+.card-contact {
+    background-color: #0000;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    flex: 1 1 calc(20% - 20px);
+    width: 100%;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.card-contact: hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    transform: translateY(-3px);
 }
 
 .card h3 {
@@ -386,7 +407,7 @@
 .full-form-container label {
     font-weight: bolder;
     color: #4CAF8B;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 /* Update styles for the dedicated form container */
@@ -694,5 +715,77 @@
     color: white;
 }
 
+.risk-circle {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        margin-left: 5px;
+    }
+
+    .pagination-container {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end; /* Aligns pagination to the right */
+        color: #038175;
+    }
+
+    .pagination-link {
+        padding: 8px 12px;
+        margin: 0 4px;
+        background-color: #038175; /* Teal Green */
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+    .step-links a {
+        color: #038175;
+    }
+
+    .pagination-link:hover {
+        background-color: #026c63; /* Slightly darker teal */
+    }
+
+    .current {
+        padding: 8px 12px;
+        font-weight: bold;
+        color: #038175;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: space-between; /* Align buttons to opposite ends */
+        align-items: center;
+        width: 100%;
+    }
+
+    #toggleCallerInfo {
+        margin-right: auto; /* Push to the left */
+    }
+
+    .mars-icon {
+        color: #007bff; /* Custom blue */
+    }
+
+    .venus-icon {
+        color: #e83e8c; /* Custom pink */
+    }
+
+    .nav-link.active {
+        background-color: #038175;
+        color: white !important;
+        border-radius: 5px;
+    }
+
+    .card-text i {
+    color: gray;
+    }
+
+    .card-text a {
+    color: black;
+    }
 
 

@@ -1,12 +1,13 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
 import calendar, json
 from django.db.models.functions import TruncMonth, TruncYear
 from django.contrib import messages
 from form.models import ReferralContact, Caller, CallSession
 from form.forms import ReferralContactForm
+from django.core.paginator import Paginator
 
 
 @login_required(login_url="/responder/login")
@@ -75,7 +76,19 @@ def reports(request):
 
 @login_required(login_url="/responder/login")
 def referrals(request):
-    return render(request, 'referrals.html')
+    query = request.GET.get('query', '')
+    referralSearch = ReferralContact.objects.all()
+
+    if query:
+        referralSearch = referralSearch.filter(
+            Q(name__icontains=query) |
+            Q(location__icontains=query) |
+            Q(gender__icontains=query) |
+            Q(email__icontains=query) |
+            Q(phone__icontains=query)
+        )
+
+    return render(request, 'referrals.html', {'referrals': referralSearch})
 
 
 @login_required
@@ -146,3 +159,46 @@ def delete_referral(request, pk):
     contact = get_object_or_404(ReferralContact, pk=pk)
     contact.delete()
     return redirect('referrals')
+
+
+def search_results(request):
+    query = request.GET.get('q', '').strip()  # Get the search query
+    callers = referrals = []
+
+    if query:
+        # Search Callers
+        callers = Caller.objects.filter(
+            Q(callerName__icontains=query) | Q(location__icontains=query)
+        )
+        print(f"Search Query: {query}")
+        print(f"Caller Results: {callers}")  # Print callers to check if any results
+
+        # Search Referral Contacts
+        referrals = ReferralContact.objects.filter(
+            Q(name__icontains=query) | Q(location__icontains=query) |
+            Q(phone__icontains=query) | Q(email__icontains=query)
+        )
+        print(f"Referral Results: {referrals}")  # Print referrals to check if any results
+
+    # Combine results for pagination
+    results = list(callers) + list(referrals)
+    paginator = Paginator(results, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'search_results.html', {
+        'query': query,
+        'callers': callers,
+        'referrals': referrals,
+        'page_obj': page_obj
+    })
+
+
+def caller_detail(request, callerID):
+    caller = get_object_or_404(Caller, callerID=callerID)
+    return render(request, 'caller_detail.html', {'caller': caller})
+
+
+def referral_detail(request, id):
+    referral = get_object_or_404(ReferralContact, id=id)
+    return render(request, 'referral_detail.html', {'referral': referral})

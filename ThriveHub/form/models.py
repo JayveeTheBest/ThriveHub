@@ -66,13 +66,17 @@ class Caller(models.Model):
     callerID = models.AutoField(primary_key=True)
     callerName = models.CharField(max_length=255, null=True, blank=True)
     gender = models.CharField(max_length=255, null=True, blank=True, choices=GENDER_CHOICES)
-    civilStatus = models.CharField(max_length=255, null=True, blank=True, choices=STATUS_CHOICES)
+    civilStatus = models.CharField(max_length=255, null=True, blank=True, choices=STATUS_CHOICES, )
     age = models.CharField(max_length=2, null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
     infoSource = models.CharField(max_length=255, null=True, blank=True, choices=SOURCE_CHOICES)
     reason = models.CharField(max_length=255, null=True, blank=True, choices=REASON_CHOICES)
     intervention = models.CharField(max_length=255, null=True, blank=True, choices=INTERVENTION_CHOICES)
     riskAssessment = models.CharField(max_length=255, null=True, blank=True, choices=RISK_CHOICES)
+
+    patient = models.ForeignKey('Patient', null=True, blank=True, on_delete=models.SET_NULL, related_name='callers')
+    representative = models.ForeignKey('Representative', null=True, blank=True, on_delete=models.SET_NULL,
+                                       related_name='representative')
 
     def __str__(self):
         return self.callerName
@@ -122,6 +126,10 @@ class AITranscript(models.Model):
 
 class Patient(models.Model):
     patientID = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
 
 
 class Representative(models.Model):
