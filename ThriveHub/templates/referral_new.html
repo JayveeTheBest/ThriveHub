@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+
+{% block title %}Add Referral Contact{% endblock %}
+
+{% block content %}
+<!-- Welcome Message -->
+<div class="container">
+    <h2 class="section-title mb-4">Add/Edit Referral</h2>
+
+    <form method="POST" class="full-form-container">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="name" class="form-label">Name</label>
+            {{ form.name }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Gender</label>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="gender" value="Male" {% if form.gender.value == "Male" %}checked{% endif %}>
+                <label class="form-check-label">Male</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="gender" value="Female" {% if form.gender.value == "Female" %}checked{% endif %}>
+                <label class="form-check-label">Female</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="location" class="form-label">Location</label>
+            {{ form.location }}
+        </div>
+
+        <div class="form-group">
+            <label for="phone" class="form-label">Phone</label>
+            {{ form.phone }}
+        </div>
+
+        <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            {{ form.email }}
+        </div>
+
+        <button type="submit" class="btn btn-lg def-btn mt-4">Save</button>
+    </form>
+</div>
+
+{% endblock %}

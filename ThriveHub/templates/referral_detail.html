@@ -1,0 +1,57 @@
+{% extends 'layout.html' %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+
+    <!-- Welcome Message -->
+    <h2 class="section-title">Welcome,
+        {% if request.user.is_authenticated %}
+            {{ request.user.first_name|default:"Responder" }} {{ request.user.last_name|default:"" }}
+        {% else %}
+            Responder
+        {% endif %}. Ready to save lives?
+    </h2>
+
+    <div class="container mt-5">
+        <div class="shadow-lg rounded-lg">
+            <div class="card-header text-white text-center" style="background-color: #4CAF8B;">
+                <h4 class="mb-0"><i class="fas fa-user-circle"></i> Referral Contact Details</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user"></i> Name</h6>
+                        <p class="text-muted">{{ referral.name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-venus-mars"></i> Gender</h6>
+                        <p class="text-muted">{{ referral.gender }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-map-marker-alt"></i> Location</h6>
+                        <p class="text-muted">{{ referral.location }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-phone"></i> Phone</h6>
+                        <p class="text-muted">{{ referral.phone|default:"N/A" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-envelope"></i> Email</h6>
+                        <p class="text-muted">{{ referral.email|default:"N/A" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar-alt"></i> Last Updated</h6>
+                        <p class="text-muted">{{ referral.date_updated }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{% url 'referrals' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

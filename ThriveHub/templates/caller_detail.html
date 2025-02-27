@@ -1,0 +1,61 @@
+{% extends 'layout.html' %}
+
+{% block title %}Caller Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="section-title mb-4">Caller Information</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <tr><th>Caller ID</th><td>{{ caller.callerID }}</td></tr>
+            <tr><th>Name</th><td>{{ caller.callerName }}</td></tr>
+            <tr><th>Age</th><td>{{ caller.age }}</td></tr>
+            <tr><th>Gender</th><td>{{ caller.gender }}</td></tr>
+            <tr><th>Civil Status</th><td>{{ caller.civilStatus }}</td></tr>
+            <tr><th>Location</th><td>{{ caller.location }}</td></tr>
+            <tr><th>Reason for Call</th><td>{{ caller.reason }}</td></tr>
+            <tr><th>Risk Assessment</th><td>{{ caller.riskAssessment }}</td></tr>
+            <tr><th>Intervention</th><td>{{ caller.intervention }}</td></tr>
+        </table>
+    </div>
+
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#callerDetailsModal">
+        View Details
+    </button>
+    <a href="{% url 'Reports' %}" class="btn btn-secondary">Back to List</a>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="callerDetailsModal" tabindex="-1" aria-labelledby="callerDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Caller Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="text-primary">Personal Information</h5>
+                        <p><strong>Name:</strong> {{ caller.callerName }}</p>
+                        <p><strong>Age:</strong> {{ caller.age }}</p>
+                        <p><strong>Gender:</strong> {{ caller.gender }}</p>
+                        <p><strong>Civil Status:</strong> {{ caller.civilStatus }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-primary">Call Details</h5>
+                        <p><strong>Location:</strong> {{ caller.location }}</p>
+                        <p><strong>Reason for Call:</strong> {{ caller.reason }}</p>
+                        <p><strong>Risk Assessment:</strong> {{ caller.riskAssessment }}</p>
+                        <p><strong>Intervention:</strong> {{ caller.intervention }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

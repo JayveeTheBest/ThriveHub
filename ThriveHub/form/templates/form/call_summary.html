@@ -1,0 +1,60 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Call Summary
+{% endblock %}
+
+{% block content %}
+    <div class="mb-3">
+        <h2 class="section-title">Call Summary</h2>
+
+        <!-- Display messages -->
+        {% if messages %}
+            <div class="alert-container">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Display the editable summary -->
+        <form method="POST" id="editSummaryForm">
+            {% csrf_token %}
+            <div contenteditable="true" id="editableSummary" style="border: 1px solid #ccc; padding: 10px;">
+                {{ summary }}
+            </div>
+            <input type="hidden" name="edited_summary" id="editedSummaryInput">
+            <button type="submit" class="btn btn-lg def-btn" style="margin-top: 20px;">Save</button>
+        </form>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Select elements
+        var editableDiv = document.getElementById('editableSummary');
+        var hiddenInput = document.getElementById('editedSummaryInput');
+        var form = document.getElementById('editSummaryForm');
+        var saveButton = document.getElementById('saveButton');
+
+        // Ensure the form captures the text from contenteditable div
+        form.addEventListener("submit", function (event) {
+            var editedSummary = editableDiv.innerText.trim();  // Get the text without HTML tags
+
+            if (editedSummary === "") {
+                event.preventDefault();  // Stop form submission if empty
+                alert("Summary cannot be empty.");
+                return;
+            }
+
+            hiddenInput.value = editedSummary;  // Assign cleaned text to hidden input
+        });
+
+        // Allow the button to trigger form submission
+        saveButton.addEventListener("click", function () {
+            form.submit();
+        });
+    });
+    </script>
+{% endblock %}

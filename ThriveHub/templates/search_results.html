@@ -1,0 +1,70 @@
+{% extends 'layout.html' %}
+
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+
+    <!-- Welcome Message -->
+    <h2 class="section-title">Welcome,
+        {% if request.user.is_authenticated %}
+            {{ request.user.first_name|default:"Responder" }} {{ request.user.last_name|default:"" }}
+        {% else %}
+            Responder
+        {% endif %}. Ready to save lives?
+    </h2>
+
+    <div class="container mt-4">
+        <h4>Search Results for "{{ query }}"</h4>
+
+        {% if callers or referrals %}
+            <!-- Callers Section -->
+            {% if callers %}
+                <h5>Callers</h5>
+                <ul class="list-group">
+                    {% for caller in callers %}
+                        <li class="list-group-item">
+                            <a href="{% url 'caller_detail' caller.callerID %}" style="color: #4CAF8B;">{{ caller.callerName }}</a>
+                            <small class="text-muted">(Location: {{ caller.location }})</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- Referral Contacts Section -->
+            {% if referrals %}
+                <h5 class="mt-4">Referral Contacts</h5>
+                <ul class="list-group">
+                    {% for referral in referrals %}
+                        <li class="list-group-item">
+                            <a href="{% url 'referral_detail' referral.id %}" style="color: #4CAF8B;">{{ referral.name }}</a>
+                            <small class="text-muted">(Location: {{ referral.location }})</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <!-- Pagination Controls -->
+            <nav class="mt-4">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?q={{ query }}&page=1">First</a></li>
+                        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a></li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a></li>
+                        <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}">Last</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+        {% else %}
+            <p>No results found.</p>
+        {% endif %}
+    </div>
+
+{% endblock %}
