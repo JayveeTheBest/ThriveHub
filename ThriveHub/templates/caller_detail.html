@@ -6,56 +6,92 @@
 <div class="container mt-4">
     <h2 class="section-title mb-4">Caller Information</h2>
 
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <tr><th>Caller ID</th><td>{{ caller.callerID }}</td></tr>
-            <tr><th>Name</th><td>{{ caller.callerName }}</td></tr>
-            <tr><th>Age</th><td>{{ caller.age }}</td></tr>
-            <tr><th>Gender</th><td>{{ caller.gender }}</td></tr>
-            <tr><th>Civil Status</th><td>{{ caller.civilStatus }}</td></tr>
-            <tr><th>Location</th><td>{{ caller.location }}</td></tr>
-            <tr><th>Reason for Call</th><td>{{ caller.reason }}</td></tr>
-            <tr><th>Risk Assessment</th><td>{{ caller.riskAssessment }}</td></tr>
-            <tr><th>Intervention</th><td>{{ caller.intervention }}</td></tr>
-        </table>
-    </div>
-
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#callerDetailsModal">
-        View Details
-    </button>
-    <a href="{% url 'Reports' %}" class="btn btn-secondary">Back to List</a>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="callerDetailsModal" tabindex="-1" aria-labelledby="callerDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Caller Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="card-caller shadow-sm p-4">
+        <div class="row">
+            <!-- Personal Information -->
+            <div class="col-md-6">
+                <h5 class="text-secondary mb-3">Personal Information</h5>
+                <p><strong>Name:</strong> {{ caller.callerName }}</p>
+                <p><strong>Age:</strong> {{ caller.age }}</p>
+                <p><strong>Gender:</strong> {{ caller.gender }}</p>
+                <p><strong>Civil Status:</strong> {{ caller.civilStatus }}</p>
             </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5 class="text-primary">Personal Information</h5>
-                        <p><strong>Name:</strong> {{ caller.callerName }}</p>
-                        <p><strong>Age:</strong> {{ caller.age }}</p>
-                        <p><strong>Gender:</strong> {{ caller.gender }}</p>
-                        <p><strong>Civil Status:</strong> {{ caller.civilStatus }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h5 class="text-primary">Call Details</h5>
-                        <p><strong>Location:</strong> {{ caller.location }}</p>
-                        <p><strong>Reason for Call:</strong> {{ caller.reason }}</p>
-                        <p><strong>Risk Assessment:</strong> {{ caller.riskAssessment }}</p>
-                        <p><strong>Intervention:</strong> {{ caller.intervention }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+            <!-- Call Details -->
+            <div class="col-md-6">
+                <h5 class="text-secondary mb-3">Call Details</h5>
+                <p><strong>Location:</strong> {{ caller.location }}</p>
+                <p><strong>Reason for Call:</strong> {{ caller.reason }}</p>
+                <p><strong>Risk Assessment:</strong> {{ caller.riskAssessment }}</p>
+                <p><strong>Intervention:</strong> {{ caller.intervention }}</p>
             </div>
         </div>
     </div>
+
+    <div class="mt-4">
+            Call History
+    </div>
+    {% if call_sessions %}
+        <div class="accordion shadow-sm" id="callHistoryAccordion" style="max-width: 800px; margin-left: 15px;">
+            {% for session in call_sessions %}
+            <div class="accordion-item">
+                <h3 class="accordion-header" id="heading{{ session.sessionID }}">
+                    <button class="accordion-button collapsed bg-light text-dark fw-bold" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#collapse{{ session.sessionID }}"
+                            aria-expanded="false" aria-controls="collapse{{ session.sessionID }}"
+                            style="font-size: 0.9rem;">
+                        🕒 {{ session.callDate }} - Responder: {{ session.responder }}
+                    </button>
+                </h3>
+                <div id="collapse{{ session.sessionID }}" class="accordion-collapse collapse" aria-labelledby="heading{{ session.sessionID }}" data-bs-parent="#callHistoryAccordion">
+                    <div class="accordion-body p-3" style="font-size: 0.85rem; background-color: #f9f9f9; border-left: 4px solid #007bff;">
+                        {% if session.transcript %}
+                            <h5 class="text-secondary"> AI-Generated Transcript Summary</h5>
+                            <p class="text-muted text-truncate" style="max-height: 60px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                                {{ session.transcript.transcriptSummary }}
+                            </p>
+                            <a href="javascript:void(0);" class="text-primary small" onclick="toggleTranscript('{{ session.sessionID }}')">View Full Transcript</a>
+                            <p id="full-transcript-{{ session.sessionID }}" class="text-muted d-none mt-2">{{ session.transcript.transcriptSummary }}</p>
+                        {% else %}
+                            <p class="text-muted"> No AI-generated transcript available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted text-center">No previous call history available for this caller.</p>
+    {% endif %}
+
+    <a href="{% url 'Reports' %}" class="btn btn-secondary mt-3">Back to List</a>
 </div>
+
+<script>
+    function toggleTranscript(sessionID) {
+        let accordionBody = document.querySelector(`#collapse${sessionID}`);
+        let transcriptElement = accordionBody.querySelector("p.text-muted"); // Get the transcript paragraph
+        let toggleLink = accordionBody.querySelector("a.text-primary");
+
+        if (!transcriptElement || !toggleLink) return; // Prevent errors if elements are missing
+
+        if (transcriptElement.classList.contains('text-truncate')) {
+            // Expand the transcript
+            transcriptElement.classList.remove('text-truncate');
+            transcriptElement.style.whiteSpace = 'normal';
+            transcriptElement.style.overflow = 'visible';
+            transcriptElement.style.maxHeight = 'none';
+            toggleLink.textContent = "Hide Full Transcript";
+        } else {
+            // Collapse back to truncated version
+            transcriptElement.classList.add('text-truncate');
+            transcriptElement.style.whiteSpace = 'nowrap';
+            transcriptElement.style.overflow = 'hidden';
+            transcriptElement.style.maxHeight = '60px';
+            toggleLink.textContent = "View Full Transcript";
+        }
+    }
+</script>
+
+
 {% endblock %}

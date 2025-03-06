@@ -27,8 +27,8 @@ class AddCallSession(forms.ModelForm):
         model = CallSession
         fields = ['startTime', 'endTime', 'outcome', 'notes']
         widgets = {
-            'startTime': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
-            'endTime': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'startTime': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time', 'required': 'required'}),
+            'endTime': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time', 'required': 'required'}),
             'outcome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter Outcome'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter Notes'}),
         }
@@ -36,7 +36,7 @@ class AddCallSession(forms.ModelForm):
 
 class AddPatientForm(forms.ModelForm):
     name = forms.CharField(
-        required=False,  # Make it optional
+        required=False,  # optional
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter Patient Name'})
     )
 
@@ -47,7 +47,7 @@ class AddPatientForm(forms.ModelForm):
 
 class AddRepresentativeForm(forms.ModelForm):
     organization = forms.CharField(
-        required=False,  # Make it optional
+        required=False,  # optional
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter Organization'})
     )
 

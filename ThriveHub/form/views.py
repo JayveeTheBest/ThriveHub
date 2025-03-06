@@ -1,17 +1,21 @@
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Max
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils.timezone import now
 from django.core.paginator import Paginator
-from .models import Caller, CallSession, AITranscript, Patient, Representative
+from .models import Caller, CallSession, AITranscript, Patient, Representative, Draft
 from .forms import AddCall, AddCallSession, AddPatientForm, AddRepresentativeForm
 from groq import Groq
-from .config import GROQ_API_KEY
+from django.conf import settings
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_date
-import openpyxl
-from django.http import HttpResponse
+import openpyxl, json
+from django.http import HttpResponse, JsonResponse
+import whisper
+import tempfile
+import os
 
 
 # Create your views here.
@@ -126,6 +130,8 @@ def exportCallReports(request):
 
 
 def addCall(request):
+    draft = Draft.objects.filter(user=request.user).first()  # Get the user's draft if exists
+    form_data = draft.form_data if draft else '{}'  # Load saved form data or empty JSON
     current_year = datetime.now().year % 100  # Get the last two digits of the year
 
     # Get the last session ID of the current year
@@ -202,78 +208,71 @@ def addCall(request):
         'patient_form': patient_form,
         'representative_form': representative_form,
         'formatted_session_id': formatted_session_id,
+        'form_data': json.dumps(form_data)
     }
     return render(request, 'form/call_new.html', context)
 
 
-def generate_summary_with_groq(caller, session, patient=None, representative=None):
+def generate_summary_with_groq(caller=None, session=None, patient=None, representative=None, transcript=None):
     try:
-        # Debug: Print variable types
-        print(
-            f"caller: {type(caller)}, session: {type(session)}, patient: {type(patient)}, representative: {type(representative)}")
+        # Initialize Groq client
+        client = Groq(api_key=settings.GROQ_API_KEY)
 
-        # Ensure required objects are not None
-        if caller is None:
-            raise ValueError("Caller object is None")
-        if session is None:
-            raise ValueError("Session object is None")
-        if patient is None:
-            print("Warning: Patient object is None")
-        if representative is None:
-            print("Warning: Representative object is None")
+        # If a transcript is provided, summarize it
+        if transcript:
+            prompt = (
+                f"You are a professional mental health helpline responder tasked with summarizing a crisis call. "
+                f"Summarize the following transcript into a well-structured paragraph without adding details that "
+                f"are not present in the transcript:\n\n"
+                f"{transcript}\n\n"
+                f"Ensure the summary is clear, professional, and concise."
+            )
+        else:
+            # Ensure required objects are not None
+            if caller is None or session is None:
+                raise ValueError("Caller and session data are required for structured form summarization.")
 
-        # Construct the prompt
-        prompt = (
-            f"You are a professional mental health helpline responder tasked with generating a concise, "
-            f"well-structured call report summary. Using only the details provided below, craft the summary in a "
-            f"coherent paragraph without introducing additional information or assumptions. Do not include a "
-            f"breakdown or list of the details unless explicitly requested. Focus on presenting the information in a "
-            f"natural and narrative style:\n"
-            f"Caller Name: {caller.callerName}\n"
-            f"Gender: {caller.gender}\n"
-            f"Civil Status: {caller.civilStatus}\n"
-            f"Age: {caller.age}\n"
-            f"Location: {caller.location}\n"
-            f"Information Source: {caller.infoSource}\n"
-            f"Reason for Calling: {caller.reason}\n"
-            f"Intervention: {caller.intervention}\n"
-            f"Risk Assessment: {caller.riskAssessment}\n\n"
-            f"Session Start Time: {session.startTime}\n"
-            f"Session End Time: {session.endTime}\n"
-            f"Outcome: {session.outcome}\n"
-            f"Additional Notes: {session.notes}\n"
-        )
-
-        # Include Patient details only if available
-        if patient:
-            prompt += (
-                f"Patient Name: {patient.name}\n"
+            # Construct prompt for structured data
+            prompt = (
+                f"You are a professional mental health helpline responder tasked with generating a concise, "
+                f"well-structured call report summary. Using only the details provided below, craft the summary in a "
+                f"coherent paragraph without introducing additional information or assumptions.\n\n"
+                f"Caller Name: {caller.callerName}\n"
+                f"Gender: {caller.gender}\n"
+                f"Civil Status: {caller.civilStatus}\n"
+                f"Age: {caller.age}\n"
+                f"Location: {caller.location}\n"
+                f"Information Source: {caller.infoSource}\n"
+                f"Reason for Calling: {caller.reason}\n"
+                f"Intervention: {caller.intervention}\n"
+                f"Risk Assessment: {caller.riskAssessment}\n\n"
+                f"Session Start Time: {session.startTime}\n"
+                f"Session End Time: {session.endTime}\n"
+                f"Outcome: {session.outcome}\n"
+                f"Additional Notes: {session.notes}\n"
             )
 
-        # Include Representative details only if available
-        if representative:
+            # Include Patient details if available
+            if patient:
+                prompt += f"Patient Name: {patient.name}\n"
+
+            # Include Representative details if available
+            if representative:
+                prompt += (
+                    f"Representative's Organization: {representative.organization}\n"
+                    f"Relationship to the Patient: {representative.patientRelationship}\n"
+                )
+
             prompt += (
-                f"Representative's Organization: {representative.organization}\n"
-                f"Relationship to the Patient: {representative.patientRelationship}\n"
+                f"Ensure the summary is clear, professional, and free from extraneous content. No need to include "
+                f"Session Start Time, Session Date, or anything related to call date and time."
             )
 
-        prompt += (
-            f"Intervention: {caller.intervention}\n"
-            f"Risk Assessment: {caller.riskAssessment}\n\n"
-            f"Session Start Time: {session.startTime}\n"
-            f"Session End Time: {session.endTime}\n"
-            f"Outcome: {session.outcome}\n"
-            f"Additional Notes: {session.notes}\n"
-            f"Ensure the summary is clear, professional, and free from extraneous content. No need to include Session "
-            f"Start Time, Session Date, or anything related to call date and time, and the phrase 'Here is a concise "
-            f"and well-structured call report summary'."
-        )
-
+        # Debugging: Print the generated prompt
         print("Generated Prompt:")
         print(prompt)
 
-        # API call
-        client = Groq(api_key=GROQ_API_KEY)
+        # API call to Groq
         response = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama3-8b-8192",
@@ -299,27 +298,35 @@ def summaryPage(request, session_id):
 
     if not transcript:
         messages.error(request, "No transcript found for this session.")
-        return redirect('AddCall')  # Redirect to the addCall page if no transcript exists
+        return redirect('AddCall')  # Redirect if no transcript exists
+
+    # Generate a summary if one doesn't exist (for real-time transcriptions)
+    if not transcript.transcriptSummary:
+        # Check if the transcript was generated from speech-to-text
+        if transcript.fullTranscript:
+            transcript.transcriptSummary = generate_summary_with_groq(transcript=transcript.fullTranscript)
+            transcript.generatedTimestamp = now()
+            transcript.save()
+        else:
+            messages.error(request, "No transcript text available for summarization.")
+            return redirect('AddCall')
 
     # Handle form submission for editing the summary
     if request.method == 'POST':
         edited_summary = request.POST.get('edited_summary')
 
         if edited_summary:
-            # Save the edited summary only if it differs from the current summary
             if edited_summary.strip() != transcript.transcriptSummary.strip():
                 transcript.transcriptSummary = edited_summary
-                transcript.generatedTimestamp = now()  # Update the timestamp
+                transcript.generatedTimestamp = now()  # Update timestamp
                 transcript.save()
-
                 messages.success(request, "Transcript summary updated successfully.")
             else:
                 messages.info(request, "No changes were made to the transcript summary.")
-
         else:
             messages.error(request, "Summary cannot be empty.")
 
-        return redirect('SummaryPage', session_id=session_id)  # Redirect to refresh the page
+        return redirect('SummaryPage', session_id=session_id)  # Refresh page
 
     # Render the summary page with the current summary
     context = {
@@ -327,3 +334,55 @@ def summaryPage(request, session_id):
         'summary': transcript.transcriptSummary,
     }
     return render(request, 'form/call_summary.html', context)
+
+
+@csrf_exempt
+def transcribe_audio(request):
+    if request.method == "POST" and request.FILES.get("audio"):
+        # Save audio file temporarily
+        audio_file = request.FILES["audio"]
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+        for chunk in audio_file.chunks():
+            temp_file.write(chunk)
+        temp_file.close()
+
+        # Transcribe using Whisper
+        os.environ[
+            "PATH"] += os.pathsep + (r"C:\Users\JayveeC\OneDrive - Cebu Institute of Technology University\AA24-25\First Sem\CCS615\ThriveHub\ffmpeg-7.1-essentials_build\bin")
+        model = whisper.load_model("base")
+        result = model.transcribe(temp_file.name)
+
+        # Clean up temp file
+        os.unlink(temp_file.name)
+
+        return JsonResponse({"transcript": result["text"]})
+
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+@csrf_exempt
+def save_draft(request):
+    if request.method == "POST" and request.user.is_authenticated:
+        form_data = request.POST.dict()  # Convert form data to dictionary
+
+        # Try to get an existing draft for the user
+        draft, created = Draft.objects.get_or_create(
+            user=request.user,
+            defaults={'form_data': '{}'}  # Use an empty dictionary or another suitable default
+        )
+
+        draft.form_data = form_data  # Update draft data
+        draft.save()
+
+        return JsonResponse({"message": "Draft saved successfully!"})
+
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+def load_draft(request):
+    if request.user.is_authenticated:
+        draft = Draft.objects.filter(user=request.user).order_by('-updated_at').first()
+        if draft:
+            return JsonResponse({"form_data": draft.form_data})
+
+    return JsonResponse({"form_data": None})

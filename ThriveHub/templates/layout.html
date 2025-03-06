@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" href="{%static 'imgs/ThriveHub_Logo.png'%}" type="img/png">
 
     <title>
         {% block title %}
@@ -86,7 +87,7 @@
 
             </div>
             <div class="user-info">
-                <i class="fa-solid fa-user"></i>
+                <a href="{% url 'settings' %}"><i class="fa-solid fa-user"></i></a>
                 <span>
                     {% if request.user.is_authenticated %}
                         {{ request.user.first_name|default:"Responder" }} {{ request.user.last_name|default:"" }} <br>

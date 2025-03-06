@@ -79,7 +79,7 @@ class Caller(models.Model):
                                        related_name='representative')
 
     def __str__(self):
-        return self.callerName
+        return f"{self.callerID}: {self.callerName}"
 
 
 class CallSession(models.Model):

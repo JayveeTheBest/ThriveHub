@@ -14,7 +14,20 @@
                         Responder
                     {% endif %}. Ready to save lives?</h2>
 
-        <!-- Cards Section -->
+        <!-- Year Filter Dropdown -->
+            <div class="filters-container">
+                <label for="yearFilter" style="margin-top: 5px;">Year:</label>
+                <select id="yearFilter" class="filter-dropdown">
+                    <option value="">Select Year</option>
+                </select>
+
+                <label for="monthFilter" style="margin-top: 5px;">Month:</label>
+                <select id="monthFilter" class="filter-dropdown">
+                    <option value="">Select Month</option>
+                </select>
+            </div>
+
+
         <div class="cards-container">
             <div class="card">
                 <h3>Reasons for Calling</h3>
@@ -26,39 +39,112 @@
             </div>
             <div class="card">
                 <h3>Risk Assessment</h3>
-                <div class="chart"><canvas id="suicideCallsChart"></canvas></div>
+                <div class="chart"><canvas id="riskChart"></canvas></div>
             </div>
         </div>
 
-
-        <!-- Call Volume Card -->
         <div class="call-volume-card">
             <h3>Call Volume</h3>
-            <!-- Year Filter Dropdown -->
-            <div class="year-filter">
-                <label for="yearFilter">Select Year:</label>
-                <select id="yearFilter">
-                    <!-- Options will be populated dynamically -->
-                </select>
-            </div>
-            <div class="chart"><canvas id="callVolumeChart"></div>
+            <div class="chart"><canvas id="callVolumeChart"></canvas></div>
         </div>
 
-</body>
-
 <script>
-// Reasons Chart
-    const reasonsLabels = {{ reasons_labels|safe }};
-    const reasonsCounts = {{ reasons_counts|safe }};
-    const ctx = document.getElementById('reasonsChart');
-    new Chart(ctx, {
+
+    const reasonsPerMonth = JSON.parse('{{ reasons_per_month|escapejs }}');
+    const genderPerMonth = JSON.parse('{{ gender_per_month|escapejs }}');
+    const riskPerMonth = JSON.parse('{{ risk_per_month|escapejs }}');
+    const callsPerMonth = JSON.parse('{{ calls_per_month|escapejs }}');
+
+    let reasonsData = JSON.parse('{{ reasons_per_month|safe }}');
+    let genderData = JSON.parse('{{ gender_per_month|safe }}');
+    let riskData = JSON.parse('{{ risk_per_month|safe }}');
+    let callsData = JSON.parse('{{ calls_per_month|safe }}');
+
+    function populateFilters() {
+        let years = new Set();
+        let months = new Set();
+
+        reasonsData.forEach(item => {
+            if (item.year) years.add(Number(item.year));
+            if (item.month) months.add(item.month);
+        });
+
+        callsData.forEach(item => {
+            if (item.year) years.add(Number(item.year));
+        });
+
+        let uniqueYears = [...years].sort((a, b) => b - a); // Sort years in descending order
+
+        let yearFilter = document.getElementById("yearFilter");
+        yearFilter.innerHTML = ""; // Clear existing options
+
+        // Add default "Select Year" option
+        let defaultYearOption = document.createElement("option");
+        defaultYearOption.value = "";
+        defaultYearOption.text = "Select Year";
+        yearFilter.appendChild(defaultYearOption);
+
+        // Populate Year Dropdown
+        uniqueYears.forEach(year => {
+            let option = document.createElement("option");
+            option.value = year;
+            option.text = year;
+            yearFilter.appendChild(option);
+        });
+
+        const monthNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        let monthFilter = document.getElementById("monthFilter");
+        monthFilter.innerHTML = ""; // Clear existing options
+
+        // Add default "Select Month" option
+        let defaultMonthOption = document.createElement("option");
+        defaultMonthOption.value = "";
+        defaultMonthOption.text = "Select Month";
+        monthFilter.appendChild(defaultMonthOption);
+
+        // Populate Month Dropdown
+        months.forEach(month => {
+            let option = document.createElement("option");
+            option.value = month;
+            option.text = monthNames[month - 1];
+            monthFilter.appendChild(option);
+        });
+    }
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let monthFilter = document.getElementById("monthFilter");
+        let currentDate = new Date();
+        let currentYear = currentDate.getFullYear();
+        let currentMonth = String(currentDate.getMonth() + 1).padStart(2, "0"); // Ensure 2-digit format
+
+        // Set default value to current year and month
+        monthFilter.value = `${currentYear}-${currentMonth}`;
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        updateCharts(); // Refresh charts with the default filters
+    });
+
+    // Initialize Chart.js Charts
+    let reasonsChartCtx = document.getElementById("reasonsChart").getContext("2d");
+    let genderChartCtx = document.getElementById("genderChart").getContext("2d");
+    let riskChartCtx = document.getElementById("riskChart").getContext("2d");
+    let callsChartCtx = document.getElementById("callVolumeChart").getContext("2d");
+
+
+    let reasonsChart = new Chart(reasonsChartCtx, {
         type: 'doughnut',
         data: {
-            labels: reasonsLabels,
+            labels: [],
             datasets: [{
                 label: '# of Calls',
-                data: reasonsCounts,
-                backgroundColor: ['#FFA07A', '#20B2AA', '#87CEFA'],
+                data: [],
+                backgroundColor: ['#FFA07A', '#20B2AA', '#87CEFA', '#FFD700', '#DC143C', '#9370DB'],
                 hoverOffset: 20
             }]
         },
@@ -71,11 +157,9 @@
                     position: 'right',
                     align: 'start',
                     labels: {
-                        font: {
-                            size: 14
-                        },
+                        font: { size: 14 },
                         color: '#333',
-                        padding: 10,
+                        padding: 5,
                         boxWidth: 12,
                         boxHeight: 12,
                     }
@@ -84,54 +168,41 @@
                     backgroundColor: 'rgba(50, 50, 50, 0.9)',
                     borderColor: 'rgba(255, 255, 255, 0.5)',
                     borderWidth: 1,
-                    bodyFont: {
-                        size: 14
-                    },
-                    titleFont: {
-                        size: 16,
-                        weight: 'bold'
-                    },
+                    bodyFont: { size: 14 },
+                    titleFont: { size: 16, weight: 'bold' },
                     padding: 10
                 }
             },
-            layout: {
-                padding: {
-                    top: 15,
-                    bottom: 15
-                }
-            },
+            layout: { padding: { top: 15, bottom: 15 } },
             cutout: '50%',
-            animation: {
-                animateScale: true,
-                animateRotate: true
-            }
+            animation: { animateScale: true, animateRotate: true }
         }
     });
 
-    // Gender Chart
-    const genderLabels = {{ gender_labels|safe }};
-    const genderCounts = {{ gender_counts|safe }};
 
+    // Extract unique labels
+    let genderLabels = [...new Set(genderData.map(item => item.gender))];
+
+    // Map colors based on genderLabels
     const genderColors = genderLabels.map(label => {
         if (label === 'Male') {
-            return '#4682B4'; // Blue for Male
+            return '#4682B4';
         } else if (label === 'Female') {
-            return '#FF69B4'; // Pink for Female
+            return '#FF69B4';
         } else if (label === 'LGBTQ++') {
-            return '#FF7F50'; // Coral for LGBTQ
+            return '#FF7F50';
         } else {
-            return '#D3D3D3'; // Gray for N/A or others
+            return '#D3D3D3';
         }
     });
 
-    const genderCtx = document.getElementById('genderChart');
-    new Chart(genderCtx, {
+    let genderChart = new Chart(genderChartCtx, {
         type: 'doughnut',
         data: {
-            labels: genderLabels,
+            labels: [],
             datasets: [{
-                label: 'No. of Callers',
-                data: genderCounts,
+                label: 'Gender Distribution',
+                data: [],
                 backgroundColor: genderColors,
                 hoverOffset: 20
             }]
@@ -145,67 +216,59 @@
                     position: 'right',
                     align: 'start',
                     labels: {
-                        font: {
-                            size: 14
-                        },
+                        font: { size: 14 },
                         color: '#333',
                         padding: 10,
                         boxWidth: 12,
                         boxHeight: 12,
-
                     }
                 },
                 tooltip: {
                     backgroundColor: 'rgba(50, 50, 50, 0.9)',
                     borderColor: 'rgba(255, 255, 255, 0.5)',
                     borderWidth: 1,
-                    bodyFont: {
-                        size: 14
-                    },
-                    titleFont: {
-                        size: 16,
-                        weight: 'bold'
-                    },
+                    bodyFont: { size: 14 },
+                    titleFont: { size: 16, weight: 'bold' },
                     padding: 10
                 }
             },
-            layout: {
-                padding: {
-                    top: 15,
-                    bottom: 15
-                }
-            },
+            layout: { padding: { top: 15, bottom: 15 } },
             cutout: '50%',
-            animation: {
-                animateScale: true,
-                animateRotate: true
-            }
+            animation: { animateScale: true, animateRotate: true }
         }
     });
 
-    // Suicide-Related Calls Chart
-    const riskLabels = {{ risk_labels|safe }};
-    const riskCounts = {{ risk_counts|safe }};
+    const RISK_COLORS = {
+        'Low Risk': '#32CD32',
+        'Moderate Risk': '#FF8C00',
+        'High Risk': '#B22222',
+    };
 
-    const riskColors = riskLabels.map(label => {
-        if (label === 'High Risk') {
-            return '#FF6F61';
-        } else if (label === 'Moderate Risk') {
-            return '#4682B4';
-        } else {
-            return '#A9A9A9';
-        }
-    });
+    // Declare riskLabels and riskCounts outside the if block to avoid scope issues
+    let riskLabels = [];
+    let riskCounts = [];
 
-    const suicideCtx = document.getElementById('suicideCallsChart');
-    new Chart(suicideCtx, {
-        type: 'pie',
+    if (typeof riskData !== 'undefined' && Array.isArray(riskData)) {
+        // Extract unique risk levels dynamically
+        riskLabels = [...new Set(riskData.map(item => item.risk))];
+
+        // Count occurrences for each risk level
+        riskCounts = riskLabels.map(risk =>
+            riskData.filter(item => item.risk === risk).reduce((sum, item) => sum + item.count, 0)
+        );
+    } else {
+        console.error("riskData is undefined or not an array");
+    }
+
+    // Initialize the chart outside the if block to ensure riskLabels and riskCounts exist
+    let riskChart = new Chart(riskChartCtx, {
+        type: 'doughnut',
         data: {
             labels: riskLabels,
             datasets: [{
-                label: 'No. of Calls',
-                data: riskCounts,
-                backgroundColor: riskColors,
+                label: 'Risk Distribution',
+                data: [],
+                backgroundColor: riskLabels.map(risk => RISK_COLORS[risk] || '#D3D3D3'), // Assign colors dynamically
                 hoverOffset: 20
             }]
         },
@@ -218,11 +281,9 @@
                     position: 'right',
                     align: 'start',
                     labels: {
-                        font: {
-                            size: 14
-                        },
+                        font: { size: 14 },
                         color: '#333',
-                        padding: 15,
+                        padding: 10,
                         boxWidth: 12,
                         boxHeight: 12,
                     }
@@ -231,164 +292,145 @@
                     backgroundColor: 'rgba(50, 50, 50, 0.9)',
                     borderColor: 'rgba(255, 255, 255, 0.5)',
                     borderWidth: 1,
-                    bodyFont: {
-                        size: 14
-                    },
-                    titleFont: {
-                        size: 16,
-                        weight: 'bold'
-                    },
+                    bodyFont: { size: 14 },
+                    titleFont: { size: 16, weight: 'bold' },
                     padding: 10
                 }
             },
-            layout: {
-                padding: {
-                    top: 15,
-                    bottom: 15
-                }
-            },
-            animation: {
-                animateScale: true,
-                animateRotate: true
-            }
+            layout: { padding: { top: 15, bottom: 15 } },
+            cutout: '50%',
+            animation: { animateScale: true, animateRotate: true }
         }
     });
 
-    // Call Volume Chart
-    const monthLabels = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const callsData = JSON.parse('{{ calls_per_month|escapejs }}');
 
-    // Group data by year
-    const callsByYear = {};
-    callsData.forEach(item => {
-        const year = item.year;
-        if (!callsByYear[year]) {
-            callsByYear[year] = Array(12).fill(0); // Initialize an array with 12 zeros (one for each month)
-        }
-        callsByYear[year][item.month - 1] = item.call_count; // Fill in the call count for the corresponding month
-    });
-
-    // Get the current year
-    const currentYear = new Date().getFullYear();
-
-    // Populate the year filter dropdown
-    const yearFilter = document.getElementById('yearFilter');
-    Object.keys(callsByYear).forEach(year => {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearFilter.appendChild(option);
-    });
-
-    // Set the default year to the current year
-    yearFilter.value = currentYear;
-
-    // Initialize the chart
     let callVolumeChart;
-    function renderChart(selectedYear) {
-        const dataset = {
-            label: selectedYear,
-            data: callsByYear[selectedYear] || Array(12).fill(0), // Use the selected year's data or default to zeros
-            backgroundColor: 'rgba(100, 181, 246, 0.8)',
-            hoverBackgroundColor: 'rgba(100, 181, 246, 1)',
-            borderColor: 'rgba(100, 181, 246, 1)',
-            borderWidth: 1
-        };
+    const monthLabels = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-        const callVolumeCtx = document.getElementById('callVolumeChart').getContext('2d');
+    function createCallVolumeChart(data = []) {
         if (callVolumeChart) {
-            // Update the existing chart
-            callVolumeChart.data.datasets = [dataset];
-            callVolumeChart.update();
-        } else {
-            // Render a new chart
-            callVolumeChart = new Chart(callVolumeCtx, {
-                type: 'bar',
-                data: {
-                    labels: monthLabels,
-                    datasets: [dataset]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false,
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    size: 14
-                                },
-                                color: '#333',
-                                padding: 10
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(50, 50, 50, 0.9)',
-                            borderColor: 'rgba(255, 255, 255, 0.5)',
-                            borderWidth: 1,
-                            bodyFont: {
-                                size: 14
-                            },
-                            titleFont: {
-                                size: 16,
-                                weight: 'bold'
-                            },
-                            padding: 10
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#333',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: '#E0E0E0'
-                            },
-                            ticks: {
-                                color: '#333',
-                                font: {
-                                    size: 12
-                                },
-                                stepSize: 20
-                            }
-                        }
-                    },
-                    layout: {
-                        padding: {
-                            top: 30,
-                            bottom: 30,
-                            left: 25,
-                            right: 25
-                        }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutBounce'
-                    }
-                }
-            });
+            callVolumeChart.destroy(); // Destroy previous chart to avoid duplication
         }
+
+        callVolumeChart = new Chart(callsChartCtx, {
+            type: 'bar',
+            data: {
+                labels: monthLabels, // Fixed to always display full months
+                datasets: [{
+                    label: 'Call Volume',
+                    data: data,
+                    backgroundColor: 'rgba(100, 181, 246, 0.8)',
+                    hoverBackgroundColor: 'rgba(100, 181, 246, 1)',
+                    borderColor: 'rgba(100, 181, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(50, 50, 50, 0.9)',
+                        borderColor: 'rgba(255, 255, 255, 0.5)',
+                        borderWidth: 1,
+                        bodyFont: { size: 14 },
+                        titleFont: { size: 16, weight: 'bold' },
+                        padding: 10
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#333', font: { size: 12 } }
+                    },
+                    y: {
+                        grid: { color: '#E0E0E0' },
+                        ticks: { color: '#333', font: { size: 12 }, stepSize: 20 }
+                    }
+                },
+                layout: { padding: { top: 30, bottom: 30, left: 25, right: 25 } },
+                animation: { duration: 1000, easing: 'easeOutBounce' }
+            }
+        });
     }
 
-    // Render the chart for the default year (current year)
-    renderChart(currentYear);
+    function updateCharts() {
+        let selectedYear = document.getElementById("yearFilter").value;
+        let selectedMonth = document.getElementById("monthFilter").value;
 
-    // Add event listener to the year filter dropdown
-    yearFilter.addEventListener('change', (event) => {
-        const selectedYear = event.target.value;
-        renderChart(selectedYear);
-    });
+        let filteredReasons = reasonsData.filter(item =>
+            (!selectedYear || item.year == selectedYear) &&
+            (!selectedMonth || item.month == selectedMonth)
+        );
+
+        let filteredCalls = callsData.filter(item =>
+            (!selectedYear || item.year == selectedYear) &&
+            (!selectedMonth || item.month == selectedMonth)
+        );
+
+        let filteredGender = genderData.filter(item =>
+            (!selectedYear || item.year == selectedYear) &&
+            (!selectedMonth || item.month == selectedMonth)
+        );
+
+        let filteredRisk = riskData.filter(item =>
+            (!selectedYear || item.year == selectedYear) &&
+            (!selectedMonth || item.month == selectedMonth)
+        );
+
+        console.log("Filtered Risk Data:", filteredRisk);
+
+
+        let reasonsLabels = [...new Set(filteredReasons.map(item => item.reason))];
+        let reasonsCounts = reasonsLabels.map(reason =>
+            filteredReasons.filter(item => item.reason === reason).reduce((sum, item) => sum + item.count, 0)
+        );
+
+        let genderLabels = [...new Set(filteredGender.map(item => item.gender))];
+        let genderCounts = genderLabels.map(gender =>
+            filteredGender.filter(item => item.gender === gender).reduce((sum, item) => sum + item.count, 0)
+        );
+
+        let riskLabels = [...new Set(filteredRisk.map(item => item.risk))];
+        let riskCounts = riskLabels.map(risk =>
+            filteredRisk.filter(item => item.risk === risk).reduce((sum, item) => sum + item.count, 0)
+        );
+
+        // Ensure we map correctly to months
+        let callsCounts = Array(12).fill(0); // Initialize empty months
+        filteredCalls.forEach(item => {
+            callsCounts[item.month - 1] = item.call_count; // Map data to correct month index
+        });
+
+        if (reasonsChart) {
+            reasonsChart.data.labels = reasonsLabels;
+            reasonsChart.data.datasets[0].data = reasonsCounts;
+            reasonsChart.update();
+        }
+
+         if (genderChart) {
+            genderChart.data.labels = genderLabels;
+            genderChart.data.datasets[0].data = genderCounts;
+            genderChart.update();
+        }
+
+         if (riskChart) {
+            riskChart.data.labels = riskLabels;
+            riskChart.data.datasets[0].data = riskCounts;
+            riskChart.update();
+        }
+
+        createCallVolumeChart(callsCounts);
+    }
+
+    document.getElementById("yearFilter").addEventListener("change", updateCharts);
+    document.getElementById("monthFilter").addEventListener("change", updateCharts);
+
+    populateFilters();
+    updateCharts();
 </script>
 
-</html>
+
 
 {% endblock %}

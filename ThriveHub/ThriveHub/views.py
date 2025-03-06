@@ -1,8 +1,9 @@
 from django.contrib.auth.decorators import login_required
+from collections import defaultdict
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, F, Q
-import calendar, json
+import json
 from django.db.models.functions import TruncMonth, TruncYear
 from django.contrib import messages
 from form.models import ReferralContact, Caller, CallSession
@@ -12,60 +13,127 @@ from django.core.paginator import Paginator
 
 @login_required(login_url="/responder/login")
 def dashboard(request):
-    reasons_data = Caller.objects.values('reason').annotate(count=Count('reason'))
-    gender_data = Caller.objects.values('gender').annotate(count=Count('gender'))
-    risk_data = Caller.objects.values('riskAssessment').annotate(count=Count('riskAssessment'))
+    # Get all months with available data grouped by year
+    available_months = (
+        CallSession.objects
+        .annotate(
+            year=TruncYear('callDate'),
+            month=TruncMonth('callDate')
+        )
+        .values('year', 'month')
+        .annotate(call_count=Count('sessionID'))
+        .order_by('year', 'month')
+    )
+
+    # Create a dictionary mapping years to their available months
+    months_by_year = defaultdict(list)
+    for item in available_months:
+        year = item['year'].year if item['year'] else None
+        month = item['month'].month if item['month'] else None
+        if year and month:
+            months_by_year[year].append(month)
+
+    # Get reasons per month
+    reasons_data = (
+        Caller.objects
+        .annotate(
+            year=TruncYear('sessions__callDate'),
+            month=TruncMonth('sessions__callDate')
+        )
+        .values('year', 'month', 'reason')
+        .annotate(count=Count('reason'))
+        .order_by('year', 'month')
+    )
+
+    reasons_per_month = [
+        {
+            'year': item['year'].year if item['year'] else None,  # Convert to integer
+            'month': item['month'].month if item['month'] else None,  # Convert to integer
+            'reason': item['reason'],
+            'count': item['count']
+        }
+        for item in reasons_data
+    ]
+
+    gender_data = (
+        Caller.objects
+        .annotate(
+            year=TruncYear('sessions__callDate'),
+            month=TruncMonth('sessions__callDate')
+        )
+        .values('year', 'month', 'gender')
+        .annotate(count=Count('gender'))
+        .order_by('year', 'month')
+    )
+
+    gender_per_month = [
+        {
+            'year': item['year'].year if item['year'] else None,  # Convert to integer
+            'month': item['month'].month if item['month'] else None,  # Convert to integer
+            'gender': item['gender'],
+            'count': item['count']
+        }
+        for item in gender_data
+    ]
+
+    risk_data = (
+        Caller.objects
+        .annotate(
+            year=TruncYear('sessions__callDate'),
+            month=TruncMonth('sessions__callDate')
+        )
+        .values('year', 'month', 'riskAssessment')
+        .annotate(count=Count('riskAssessment'))
+        .order_by('year', 'month')
+    )
+
+    risk_per_month = [
+        {
+            'year': item['year'].year if item['year'] else None,  # Convert to integer
+            'month': item['month'].month if item['month'] else None,  # Convert to integer
+            'risk': item['riskAssessment'],
+            'count': item['count']
+        }
+        for item in risk_data
+    ]
 
     # Group calls by month and year
     monthly_calls = (
         CallSession.objects
         .annotate(
-            year=TruncYear('callDate'),  # Group by year
-            month=TruncMonth('callDate')  # Group by month
+            year=TruncYear('callDate'),
+            month=TruncMonth('callDate')
         )
-        .values('year', 'month')  # Include both year and month in the grouping
+        .values('year', 'month')
         .annotate(call_count=Count('sessionID'))
-        .order_by('year', 'month')  # Order by year and month
+        .order_by('year', 'month')
     )
 
-    # Prepare data for the bar chart
-    calls_data = []
-    for item in monthly_calls:
-        calls_data.append({
-            'year': item['year'].year,  # Extract the year
-            'month': item['month'].month,  # Extract the month
-            'call_count': item['call_count']  # Extract the call count
-        })
+    calls_data = [
+        {
+            'year': str(item['year'].year) if item['year'] else None,  # Convert to string
+            'month': str(item['month'].month) if item['month'] else None,  # Convert to string
+            'call_count': item['call_count']
+        }
+        for item in monthly_calls
+    ]
 
-    # Convert data to JSON for use in the template
-    calls_per_month = json.dumps(calls_data)
-
-    reasons_labels = [item['reason'] for item in reasons_data]
-    reasons_counts = [item['count'] for item in reasons_data]
-    gender_labels = [item['gender'] for item in gender_data]
-    gender_counts = [item['count'] for item in gender_data]
-    risk_labels = [item['riskAssessment'] for item in risk_data]
-    risk_counts = [item['count'] for item in risk_data]
-
-    print("Reasons Labels:", list(reasons_labels))
-    print("Reasons Counts:", list(reasons_counts))
-    print("Gender Data:", list(gender_data))
-    print("Risk Data:", list(risk_data))
-    print("Monthly Calls Data:", calls_per_month)
-
-    # Convert data for charts
+    # print("\n===== DEBUG OUTPUT =====")
+    # print("Reasons Data:", json.dumps(reasons_per_month, indent=2))
+    # print("Gender Data:", json.dumps(gender_per_month, indent=2))
+    # print("Risk Data:", json.dumps(risk_per_month, indent=2))
+    # print("Monthly Calls Data:", json.dumps(calls_data, indent=2))
+    # print("========================\n")
+    print("Months by Year:", json.dumps(months_by_year, indent=2))
+    # Convert to JSON for safe rendering in template
     context = {
-        'reasons_labels': reasons_labels,
-        'reasons_counts': reasons_counts,
-        'gender_labels': gender_labels,
-        'gender_counts': gender_counts,
-        'risk_labels': risk_labels,
-        'risk_counts': risk_counts,
-        'calls_per_month': calls_per_month,  # Updated data for the bar chart
-        'gender_data': list(gender_data),
-        'suicide_data': list(risk_data),
-        'monthly_calls': list(monthly_calls),
+        'reasons_per_month': json.dumps(reasons_per_month),
+        'gender_per_month': json.dumps(gender_per_month),
+        'risk_per_month': json.dumps(risk_per_month),
+        'calls_per_month': json.dumps(calls_data),
+        'months_by_year': json.dumps(months_by_year),
     }
+
     return render(request, 'dashboard.html', context)
 
 
@@ -196,7 +264,15 @@ def search_results(request):
 
 def caller_detail(request, callerID):
     caller = get_object_or_404(Caller, callerID=callerID)
-    return render(request, 'caller_detail.html', {'caller': caller})
+
+    # Fetch all call sessions related to this caller
+    call_sessions = CallSession.objects.filter(caller=caller).prefetch_related('transcript').order_by('-callDate')
+
+    context = {
+        'caller': caller,
+        'call_sessions': call_sessions, }
+
+    return render(request, 'caller_detail.html', context)
 
 
 def referral_detail(request, id):

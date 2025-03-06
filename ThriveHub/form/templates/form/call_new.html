@@ -8,7 +8,19 @@
 
         <!-- Welcome Message -->
         <h2 class="section-title">Call Session No: {{ formatted_session_id }}</h2>
-        <form method="POST">
+
+        <!-- Toggle Switch for Speech-to-Text -->
+        <div class="toggle-container" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <label class="switch">
+                <input type="checkbox" id="toggle-mode">
+                <span class="slider round"></span>
+            </label>
+            <span id="toggle-label">Enable Speech-to-Text</span>
+        </div>
+
+
+        <h8 id="draft-status" class="text-muted" style="font-style: italic; color: gray; margin-left: auto;"></h8>
+        <form method="POST" id="call-form">
             {% csrf_token %}
             <!-- Call Form Section -->
             <div class="full-form-container">
@@ -141,33 +153,222 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-lg def-btn">
+                <button type="submit" class="btn btn-md def-btn">
                     <i class="fa-solid fa-bolt" aria-hidden="true" style="margin-right: 5px;"></i> Generate Summary
                 </button>
-            </div>
         </form>
+
+
+            </div>
+
+            <!-- Text-to-Speech -->
+            <div id="speech-to-text-container" class="full-form-container" style="display: none; text-align: center; padding: 20px;">
+                <!-- Default State: Play Button -->
+                <button id="startRecording" style="border: none; background: transparent; font-size: 40px; cursor: pointer;">
+                    <i class="fa-solid fa-play" style="color:#4CAF8B;"></i>
+                </button>
+                <p id="status" style="margin-top: 10px; font-size: 14px; color: #666;">Press to start recording</p>
+
+                <!-- Recording State: Waveform + Stop Icon -->
+                <div id="recordingIndicator" style="display: none; flex-direction: column; align-items: center; justify-content: center;">
+                    <div class="waveform">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <button id="stopRecording" style="border: none; background: transparent; font-size: 40px; cursor: pointer;">
+                        <i class="fa-solid fa-stop" style="color:#D64545;"></i>
+                    </button>
+                    <p style="font-size: 14px; color: #666;">Once call has completed, click Stop</p>
+                </div>
+
+                <!-- Transcript Display (Editable) -->
+                <form method="POST" id="call-transcript">
+                    {% csrf_token %}
+                    <div id="transcriptContainer" style="display: none; margin-top: 15px; padding: 15px;">
+                        <strong style="font-size: 16px;">Transcript:</strong>
+                        <div id="transcript" contenteditable="true" style="justify-content: left; font-size: 14px; margin: 15px; color: #222; border: 1px solid #ddd; padding: 8px; border-radius: 4px; min-height: 50px;">
+                            Click to edit transcript...
+                        </div>
+                        <button type="submit" class="btn btn-md def-btn">
+                            <i class="fa-solid fa-bolt" aria-hidden="true" style="margin-right: 5px;"></i> Generate Summary
+                        </button>
+                    </div>
+                </form>
+            </div>
+
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        const startBtn = document.getElementById("startRecording");
+        const stopBtn = document.getElementById("stopRecording");
+        const statusText = document.getElementById("status");
+        const recordingIndicator = document.getElementById("recordingIndicator");
+        const transcriptContainer = document.getElementById("transcriptContainer");
+        const transcript = document.getElementById("transcript");
+
+        startBtn.addEventListener("click", function () {
+            startBtn.style.display = "none"; // Hide play button
+            recordingIndicator.style.display = "flex"; // Show waveform + stop
+            statusText.innerText = "Recording in progress...";
+        });
+
+        stopBtn.addEventListener("click", function () {
+            recordingIndicator.style.display = "none"; // Hide waveform
+            transcriptContainer.style.display = "block"; // Show transcript
+            statusText.innerText = "Recording stopped. Processing transcript...";
+
+            // Simulate transcript capture
+            setTimeout(() => {
+                transcript.innerText = "Generating transcript...";
+                statusText.innerText = "When transcript is ready, click to edit if needed.";
+            }, 1000);
+        });
+
+        const form = document.querySelector("form");
+        const draftStatus = document.getElementById("draft-status");
+        const saveInterval = 60000; // Auto-save every minute
+
+        function saveDraft() {
+            if (!form) {
+                console.error("Form element not found.");
+                return;
+            }
+
+            let formData = new FormData(form);
+            fetch("{% url 'save_draft' %}", {
+                method: "POST",
+                body: formData,
+                headers: { "X-CSRFToken": "{{ csrf_token }}" },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    let now = new Date();
+                    let formattedTime = now.toLocaleTimeString();
+                    draftStatus.textContent = `Draft saved at ${formattedTime}`;
+                }
+            })
+            .catch(error => console.error("Error saving draft:", error));
+        }
+
+        setInterval(saveDraft, saveInterval);
+        window.addEventListener("beforeunload", saveDraft);
+
+        fetch("{% url 'load_draft' %}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.form_data) {
+                    Object.entries(data.form_data).forEach(([key, value]) => {
+                        let field = document.querySelector(`[name="${key}"]`);
+                        if (field) field.value = value;
+                    });
+                }
+            })
+            .catch(error => console.error("Error loading draft:", error));
+
         let reasonField = document.getElementById("{{ caller_form.reason.auto_id }}");
         let patientRepSection = document.getElementById("patient_representative_section");
 
         function toggleFields() {
-            if (reasonField.value && reasonField.value === "Calling for another person") {
-                patientRepSection.style.display = "flex";
-            } else {
-                patientRepSection.style.display = "none";
+            if (reasonField && patientRepSection) {
+                patientRepSection.style.display = (reasonField.value === "Calling for another person") ? "flex" : "none";
             }
         }
 
-        // Run on page load
-        toggleFields();
+        if (reasonField) {
+            toggleFields();
+            reasonField.addEventListener("change", toggleFields);
+        } else {
+            console.error("Reason field not found.");
+        }
 
-        // Run when the reason field changes
-        reasonField.addEventListener("change", toggleFields);
+        const toggleSwitch = document.getElementById("toggle-mode");
+        const toggleLabel = document.getElementById("toggle-label");
+        const callForm = document.getElementById("call-form");
+        const speechToTextContainer = document.getElementById("speech-to-text-container");
+
+        if (toggleSwitch && toggleLabel && callForm && speechToTextContainer) {
+            toggleSwitch.addEventListener("change", function () {
+                console.log("Toggle clicked! Checked:", toggleSwitch.checked);
+                callForm.style.display = toggleSwitch.checked ? "none" : "block";
+                speechToTextContainer.style.display = toggleSwitch.checked ? "block" : "none";
+                toggleLabel.textContent = toggleSwitch.checked ? "Enable Manual Call Logging" : "Enable Speech-to-Text";
+            });
+        } else {
+            console.error("Toggle switch or related elements not found.");
+        }
+
+        let mediaRecorder;
+        let audioChunks = [];
+
+        const startRecordingBtn = document.getElementById("startRecording");
+        const stopRecordingBtn = document.getElementById("stopRecording");
+        const transcriptDisplay = document.getElementById("transcript");
+        const statusDisplay = document.getElementById("status");
+
+        if (startRecordingBtn && stopRecordingBtn && transcriptDisplay && statusDisplay) {
+            startRecordingBtn.addEventListener("click", async () => {
+                try {
+                    let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = []; // Reset audio chunks when starting a new recording
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        let audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+                        let formData = new FormData();
+                        formData.append("audio", audioBlob);
+
+                        try {
+                            let response = await fetch("/form/transcribe/", {
+                                method: "POST",
+                                body: formData,
+                                headers: { "X-CSRFToken": "{{ csrf_token }}" }
+                            });
+
+                            let responseText = await response.text();
+                            console.log("Server Response:", responseText); // Log full response for debugging
+
+                            let data = JSON.parse(responseText); // Parse manually to avoid JSON errors
+
+                            if (data.transcript) {
+                                transcriptDisplay.innerText = data.transcript;
+                                statusDisplay.innerText = "Generated Transcript.";
+                            } else {
+                                statusDisplay.innerText = "Error: No transcript received.";
+                            }
+                        } catch (error) {
+                            console.error("Error processing transcript:", error);
+                            statusDisplay.innerText = "Error processing recording.";
+                        }
+                    };
+
+                    mediaRecorder.start();
+                    statusDisplay.innerText = "Recording...";
+                    startRecordingBtn.disabled = true;
+                    stopRecordingBtn.disabled = false;
+                } catch (error) {
+                    console.error("Error accessing microphone:", error);
+                }
+            });
+
+            stopRecordingBtn.addEventListener("click", () => {
+                if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                    mediaRecorder.stop();
+                    startRecordingBtn.disabled = false;
+                    stopRecordingBtn.disabled = true;
+                }
+            });
+        } else {
+            console.error("Recording buttons or status elements not found.");
+        }
     });
-
 </script>
+
+
+
     </div>
 </div>
 

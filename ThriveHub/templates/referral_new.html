@@ -5,7 +5,7 @@
 {% block content %}
 <!-- Welcome Message -->
 <div class="container">
-    <h2 class="section-title mb-4">Add/Edit Referral</h2>
+    <h2 id="referralTitle" class="section-title mb-4">Add/Edit Referral</h2>
 
     <form method="POST" class="full-form-container">
         {% csrf_token %}
@@ -45,5 +45,18 @@
         <button type="submit" class="btn btn-lg def-btn mt-4">Save</button>
     </form>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let titleElement = document.getElementById("referralTitle");
+        let currentPath = window.location.pathname;
+
+        if (currentPath.includes("/add")) {
+            titleElement.textContent = "Add New Referral Contact";
+        } else if (currentPath.includes("/edit")) {
+            titleElement.textContent = "Edit Referral Contact";
+        }
+    });
+</script>
 
 {% endblock %}
