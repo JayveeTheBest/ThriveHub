@@ -124,7 +124,7 @@ def dashboard(request):
     # print("Risk Data:", json.dumps(risk_per_month, indent=2))
     # print("Monthly Calls Data:", json.dumps(calls_data, indent=2))
     # print("========================\n")
-    print("Months by Year:", json.dumps(months_by_year, indent=2))
+    # print("Months by Year:", json.dumps(months_by_year, indent=2))
     # Convert to JSON for safe rendering in template
     context = {
         'reasons_per_month': json.dumps(reasons_per_month),

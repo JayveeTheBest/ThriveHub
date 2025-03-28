@@ -11,12 +11,10 @@ from groq import Groq
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_date
-import openpyxl, json
-from django.http import HttpResponse, JsonResponse
-import whisper
-import tempfile
-import os
-
+import openpyxl, json, requests
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
+import whisper, tempfile, os, logging
+from django.urls import reverse
 
 # Create your views here.
 
@@ -265,6 +263,7 @@ def generate_summary_with_groq(caller=None, session=None, patient=None, represen
 
             prompt += (
                 f"Ensure the summary is clear, professional, and free from extraneous content. No need to include "
+                f"'Here is a concise and well-structured call report summary:,'"
                 f"Session Start Time, Session Date, or anything related to call date and time."
             )
 
@@ -336,28 +335,246 @@ def summaryPage(request, session_id):
     return render(request, 'form/call_summary.html', context)
 
 
-@csrf_exempt
+# Configure logging
+logger = logging.getLogger(__name__)
+
+
+@csrf_exempt  # Remove this if you can implement CSRF protection
 def transcribe_audio(request):
     if request.method == "POST" and request.FILES.get("audio"):
-        # Save audio file temporarily
-        audio_file = request.FILES["audio"]
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-        for chunk in audio_file.chunks():
-            temp_file.write(chunk)
-        temp_file.close()
+        try:
+            audio_file = request.FILES["audio"]
 
-        # Transcribe using Whisper
-        os.environ[
-            "PATH"] += os.pathsep + (r"C:\Users\JayveeC\OneDrive - Cebu Institute of Technology University\AA24-25\First Sem\CCS615\ThriveHub\ffmpeg-7.1-essentials_build\bin")
-        model = whisper.load_model("base")
-        result = model.transcribe(temp_file.name)
+            # Use a temporary file safely
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+                for chunk in audio_file.chunks():
+                    temp_file.write(chunk)
+                temp_path = temp_file.name  # Store path before closing
 
-        # Clean up temp file
-        os.unlink(temp_file.name)
+            # Load Whisper model
+            model = whisper.load_model("base")
+            result = model.transcribe(temp_path)
 
-        return JsonResponse({"transcript": result["text"]})
+            # Clean up temp file
+            os.unlink(temp_path)
 
-    return JsonResponse({"error": "Invalid request"}, status=400)
+            return JsonResponse({"transcript": result["text"]})
+        except Exception as e:
+            logger.error(f"Error transcribing audio: {e}")
+            return JsonResponse({"error": "Failed to process audio."}, status=500)
+
+    return JsonResponse({"error": "Invalid request."}, status=400)
+
+
+GENDER_CHOICES = ['Male', 'Female', 'LGBTQ++', 'N/A']
+STATUS_CHOICES = ['Single', 'Single (Living in)', 'Married', 'Separated', 'Widowed', 'N/A']
+SOURCE_CHOICES = ['Online', 'Media', 'Family/Friend', 'Colleague', 'Referral']
+REASON_CHOICES = ['Mental Health', 'Marital', 'School', 'Financial', 'Suicidal Crisis', 'Calling for another person']
+INTERVENTION_CHOICES = ['PsychEducation', 'Referral', 'Empathetic Listening', 'Breathing Technique']
+RISK_CHOICES = ['Low Risk', 'Moderate Risk', 'High Risk']
+
+
+def replace_null(data):
+    if isinstance(data, dict):
+        return {k: replace_null(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [replace_null(item) for item in data]
+    elif data is None or data == "":
+        return "N/A"
+    return data
+
+
+@csrf_exempt
+def forward_transcript(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("Invalid request method.")
+
+    try:
+        raw_body = request.body.decode("utf-8")
+        logger.info(f"Raw Request Body: {raw_body}")
+        data = json.loads(raw_body)
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON Decode Error: {e}")
+        return HttpResponseBadRequest("Invalid JSON format in request.")
+
+    transcript = data.get("transcript", "").strip()
+    if not transcript:
+        logger.error("No transcript found in request body.")
+        return HttpResponseBadRequest("Transcript is required.")
+
+    logger.info(f"Received Transcript: {transcript}")
+
+    client = Groq(api_key=settings.GROQ_API_KEY)
+
+    prompt = (
+        "Extract the following details from the given mental health crisis call transcript. "
+        "Return ONLY valid JSON without any additional text, explanations, or formatting. "
+        "Ensure that fields strictly match the provided options:\n\n"
+    
+        "{\n"
+        '  "Caller Name": "",\n'
+        '  "Gender": "(Must be one of: Male, Female, LGBTQ++, N/A)",\n'
+        '  "Civil Status": "(Must be one of: Single, Single (Living in), Married, Separated, Widowed, N/A)",\n'
+        '  "Age": "(Numeric value only)",\n'
+        '  "Location": "",\n'
+        '  "Information Source": "(Must be one of: Online, Media, Family/Friend, Colleague, Referral)",\n'
+        '  "Reason for Calling": "(Must be one of: Mental Health, Marital, School, Financial, Suicidal Crisis, '
+        '   Calling for another person)",\n'
+        '  "Intervention": "(Must be one of: PsychEducation, Referral, Empathetic Listening, Breathing Technique)",\n'
+        '  "Risk Assessment": "(Must be one of: Low Risk, Moderate Risk, High Risk)",\n'
+        '  "Session Start Time": "(HH:MM:SS)",\n'
+        '  "Session End Time": "(HH:MM:SS)",\n'
+        '  "Outcome": "",\n'
+        '  "Additional Notes": "",\n'
+        '  "Patient Name": "",\n'
+        '  "Representative\'s Organization": "",\n'
+        '  "Representative\'s Relationship to Patient": ""\n'
+        "}\n\n"
+    
+        f"Transcript:\n{transcript}\n\n"
+        "Ensure all fields strictly match the given choices, and return valid JSON only."
+    )
+
+    try:
+        response = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama3-8b-8192",
+            temperature=0.7,
+            max_tokens=1024,
+            top_p=1,
+            stream=False,
+            stop=None,
+        )
+    except Exception as e:
+        logger.error(f"Error in AI request: {str(e)}")
+        return HttpResponseBadRequest("Failed to communicate with AI API.")
+
+    if not response or not hasattr(response, "choices") or not response.choices:
+        logger.error("No valid response from AI.")
+        return JsonResponse({"error": "Failed to extract details from transcript."}, status=500)
+
+    ai_output = response.choices[0].message.content.strip()
+    logger.info(f"Raw AI Output: {ai_output}")
+
+    try:
+        extracted_data = json.loads(ai_output)
+        print(extracted_data)
+    except json.JSONDecodeError:
+        logger.error("AI response is not valid JSON.")
+        return JsonResponse({"error": "AI response is not in JSON format."}, status=500)
+
+    default_values = {
+        "Caller Name": "N/A", "Gender": "N/A", "Civil Status": "N/A", "Age": "N/A",
+        "Location": "N/A", "Information Source": "N/A", "Reason for Calling": "N/A",
+        "Intervention": "N/A", "Risk Assessment": "N/A", "Session Start Time": "N/A",
+        "Session End Time": "N/A", "Outcome": "N/A", "Additional Notes": "N/A",
+        "Patient Name": "N/A", "Representative's Organization": "N/A",
+        "Representative's Relationship to Patient": "N/A"
+    }
+
+    for key in default_values:
+        if key not in extracted_data or not extracted_data[key]:
+            extracted_data[key] = default_values[key]
+
+    logger.info("Data successfully extracted from transcript.")
+
+    session_form = AddCallSession(initial={
+        'startTime': extracted_data["Session Start Time"],
+        'endTime': extracted_data["Session End Time"],
+        'outcome': extracted_data["Outcome"],
+        'notes': extracted_data["Additional Notes"],
+    })
+
+    caller_form = AddCall(initial={
+        'callerName': extracted_data["Caller Name"],
+        'location': extracted_data["Location"],
+        'gender': extracted_data["Gender"],
+        'civilStatus': extracted_data["Civil Status"],
+        'age': extracted_data["Age"],
+        'reason': extracted_data["Reason for Calling"],
+        'infoSource': extracted_data["Information Source"],
+        'riskAssessment': extracted_data["Risk Assessment"],
+        'intervention': extracted_data["Intervention"],
+    })
+
+    patient_form = AddPatientForm(initial={
+        'name': extracted_data["Patient Name"],
+    })
+
+    representative_form = AddRepresentativeForm(initial={
+        'organization': extracted_data["Representative's Organization"],
+        'patientRelationship': extracted_data["Representative's Relationship to Patient"],
+    })
+
+    logger.info(f"Final Extracted Data Sent to UI: {json.dumps(extracted_data, indent=2)}")
+    print(f"Final Extracted Data Sent to UI: {json.dumps(extracted_data, indent=2)}")
+
+    return render(request, "form/tts_summary.html", {
+        "transcript": transcript,
+        "session_form": session_form,
+        "caller_form": caller_form,
+        "patient_form": patient_form,
+        "representative_form": representative_form,
+    })
+
+
+def generate_summary_from_transcript(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body.decode("utf-8"))
+            transcript = data.get("transcript", "").strip()
+
+            if not transcript:
+                logger.error("Empty transcript received!")
+                return JsonResponse({"error": "Transcript is required."}, status=400)
+
+            client = Groq(api_key=settings.GROQ_API_KEY)
+
+            prompt = (
+                f"You are a professional mental health helpline responder. Summarize the following transcript "
+                f"into a well-structured paragraph without adding details that are not present:\n\n"
+                f"{transcript} "
+                f"Ensure the summary is clear, professional, and concise."
+            )
+
+            logger.info("Sending prompt to Groq API...")
+
+            response = client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model="llama3-8b-8192",
+                temperature=1,
+                max_tokens=1024,
+                top_p=1,
+                stream=False,
+                stop=None,
+            )
+
+            if not response or not hasattr(response, "choices") or not response.choices:
+                logger.error("No valid response from Groq API.")
+                return JsonResponse({"error": "No valid summary received from Groq API."}, status=500)
+
+            summary = response.choices[0].message.content.strip()
+
+            if not summary:
+                logger.error("Received an empty summary from Groq API.")
+                return JsonResponse({"error": "Received an empty summary from Groq API."}, status=500)
+
+            logger.info("Summary successfully generated.")
+            return JsonResponse({"summary": summary}, status=200)
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON Decode Error: {e}")
+            return JsonResponse({"error": "Invalid JSON format in request."}, status=400)
+        except Exception as e:
+            logger.error(f"Unexpected Error: {type(e).__name__} - {e}")
+            return JsonResponse({"error": "Error generating summary from the Groq API."}, status=500)
+
+    return JsonResponse({"error": "Invalid request method."}, status=405)
+
+# Add this view to render the page with the summary
+def tts_summary_view(request):
+    return render(request, 'tts_summary.html', {"summary": ""})  # Default summary is empty
+
 
 
 @csrf_exempt

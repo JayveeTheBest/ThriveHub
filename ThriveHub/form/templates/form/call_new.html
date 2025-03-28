@@ -181,13 +181,15 @@
                 </div>
 
                 <!-- Transcript Display (Editable) -->
-                <form method="POST" id="call-transcript">
+                <form method="POST" id="call-transcript" action="{% url 'forward_transcript' %}">
                     {% csrf_token %}
                     <div id="transcriptContainer" style="display: none; margin-top: 15px; padding: 15px;">
                         <strong style="font-size: 16px;">Transcript:</strong>
-                        <div id="transcript" contenteditable="true" style="justify-content: left; font-size: 14px; margin: 15px; color: #222; border: 1px solid #ddd; padding: 8px; border-radius: 4px; min-height: 50px;">
-                            Click to edit transcript...
+                        <div id="transcript" contenteditable="true" data-placeholder="Click to edit transcript..." style="justify-content: left; font-size: 14px; margin: 15px; color: #222; border: 1px solid #ddd; padding: 8px; border-radius: 4px; min-height: 50px;">
+
                         </div>
+                        <!-- Hidden input to hold transcript value -->
+                        <input type="hidden" id="hiddenTranscript" name="transcript">
                         <button type="submit" class="btn btn-md def-btn">
                             <i class="fa-solid fa-bolt" aria-hidden="true" style="margin-right: 5px;"></i> Generate Summary
                         </button>
@@ -196,32 +198,74 @@
             </div>
 
 
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const startBtn = document.getElementById("startRecording");
         const stopBtn = document.getElementById("stopRecording");
         const statusText = document.getElementById("status");
         const recordingIndicator = document.getElementById("recordingIndicator");
-        const transcriptContainer = document.getElementById("transcriptContainer");
-        const transcript = document.getElementById("transcript");
+        const transcriptDiv = document.getElementById("transcript"); // contenteditable div
+        const hiddenTranscriptInput = document.getElementById("hiddenTranscript"); // hidden input field
+        const transcriptForm = document.getElementById("call-transcript"); // form
 
-        startBtn.addEventListener("click", function () {
-            startBtn.style.display = "none"; // Hide play button
-            recordingIndicator.style.display = "flex"; // Show waveform + stop
-            statusText.innerText = "Recording in progress...";
-        });
+        if (transcriptDiv && hiddenTranscriptInput && transcriptForm) {
+            // Sync contenteditable changes to the hidden input
+            transcriptDiv.addEventListener("input", function () {
+                hiddenTranscriptInput.value = transcriptDiv.innerText.trim();
+            });
 
-        stopBtn.addEventListener("click", function () {
-            recordingIndicator.style.display = "none"; // Hide waveform
-            transcriptContainer.style.display = "block"; // Show transcript
-            statusText.innerText = "Recording stopped. Processing transcript...";
+            // Prevent normal form submission and send data via fetch()
+            transcriptForm.addEventListener("submit", function (event) {
+                event.preventDefault(); // Stop default form submission
 
-            // Simulate transcript capture
-            setTimeout(() => {
-                transcript.innerText = "Generating transcript...";
-                statusText.innerText = "When transcript is ready, click to edit if needed.";
-            }, 1000);
-        });
+                const transcriptText = hiddenTranscriptInput.value.trim();
+                if (!transcriptText) {
+                    alert("Please enter a transcript before submitting.");
+                    return;
+                }
+
+                fetch(transcriptForm.action, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    },
+                    body: JSON.stringify({ transcript: transcriptText })
+                })
+                .then(response => response.text())  // Change from `.json()` to `.text()` to process full page response
+                .then(html => {
+                    // ✅ Replace the current page with the rendered summary page
+                    document.open();
+                    document.write(html);
+                    document.close();
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+            });
+        }
+
+        // Check if start/stop buttons exist before adding event listeners
+        if (startBtn && stopBtn) {
+            startBtn.addEventListener("click", function () {
+                startBtn.style.display = "none"; // Hide play button
+                recordingIndicator.style.display = "flex"; // Show waveform + stop
+                statusText.innerText = "Recording in progress...";
+            });
+
+            stopBtn.addEventListener("click", function () {
+                recordingIndicator.style.display = "none"; // Hide waveform
+                transcriptContainer.style.display = "block"; // Show transcript
+                statusText.innerText = "Recording stopped. Processing transcript...";
+
+                // Simulate transcript capture
+                setTimeout(() => {
+                    transcriptDiv.innerText = "Generating transcript..."; // Fix: Change transcript to transcriptDiv
+                    statusText.innerText = "When transcript is ready, click to edit if needed.";
+                }, 1000);
+            });
+        }
 
         const form = document.querySelector("form");
         const draftStatus = document.getElementById("draft-status");
@@ -297,6 +341,13 @@
             console.error("Toggle switch or related elements not found.");
         }
 
+        function getCSRFToken() {
+            return document.cookie
+                .split('; ')
+                .find(row => row.startsWith('csrftoken='))
+                ?.split('=')[1];
+        }
+
         let mediaRecorder;
         let audioChunks = [];
 
@@ -335,7 +386,23 @@
 
                             if (data.transcript) {
                                 transcriptDisplay.innerText = data.transcript;
-                                statusDisplay.innerText = "Generated Transcript.";
+                                statusDisplay.innerText = "Generated Transcript.";// Forward the transcript to the backend for logging
+                                try {
+                                    await fetch("/form/forward_transcript/", {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            "X-CSRFToken": getCSRFToken()
+                                        },
+                                        body: JSON.stringify({ transcript: data.transcript })
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => console.log("Summary Received:", data))
+                                    .catch(error => console.error("Error:", error));
+                                    console.log("Transcript successfully forwarded to the backend.");
+                                } catch (error) {
+                                    console.error("Error forwarding transcript:", error);
+                                }
                             } else {
                                 statusDisplay.innerText = "Error: No transcript received.";
                             }

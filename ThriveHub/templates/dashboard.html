@@ -66,7 +66,7 @@
 
         reasonsData.forEach(item => {
             if (item.year) years.add(Number(item.year));
-            if (item.month) months.add(item.month);
+            if (item.month) months.add(Number(item.month)); // Ensure conversion to number
         });
 
         callsData.forEach(item => {
@@ -100,20 +100,25 @@
         let monthFilter = document.getElementById("monthFilter");
         monthFilter.innerHTML = ""; // Clear existing options
 
-        // Add default "Select Month" option
+        // Explicitly create and append the default option
         let defaultMonthOption = document.createElement("option");
         defaultMonthOption.value = "";
         defaultMonthOption.text = "Select Month";
+        defaultMonthOption.selected = true;  // Ensure it's the default selected option
         monthFilter.appendChild(defaultMonthOption);
 
         // Populate Month Dropdown
         months.forEach(month => {
             let option = document.createElement("option");
             option.value = month;
-            option.text = monthNames[month - 1];
+            option.text = monthNames[month - 1]; // Convert numeric month to name
             monthFilter.appendChild(option);
         });
+
+        console.log("Month Filter Element:", monthFilter);
     }
+
+
 
 
     document.addEventListener("DOMContentLoaded", function () {
