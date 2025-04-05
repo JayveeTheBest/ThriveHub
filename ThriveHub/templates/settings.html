@@ -1,39 +1,175 @@
 {% extends 'layout.html' %}
 
 {% block title %}
-    Call Summary
+    Account Settings
 {% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-    <h2 class="section-title">Settings</h2>
-    <hr>
-        <!-- Display Success Messages -->
-        {% if messages %}
-            <div class="alert alert-success" role="alert">
-                {% for message in messages %}
-                    {{ message }}
-                {% endfor %}
-            </div>
-        {% endif %}
 
-        <!-- User Info Form -->
-        <form method="POST" action="">
+
+    <!-- Display Success Messages -->
+            {% if messages %}
+                <div class="alert alert-success" role="alert">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+
+    <div class="container mt-4">
+        <div class="card-full shadow-sm p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Account Settings</h4>
+            <button class="btn btn-light" onclick="toggleEdit()" aria-label="Edit">
+                <i class="fas fa-edit"></i>
+            </button>
+        </div>
+
+        <!-- View Mode -->
+        <div id="viewMode" class="profile-info">
+            <!-- Full Name Section -->
+            <div class="mb-4">
+                <h2 style="color: #4CAF8B;">{{ user.first_name }} {{ user.last_name }}</h2>
+            </div>
+
+            <!-- Username Section -->
+            <div class="mb-3">
+                <span class="text-muted">Username:</span>
+                <span class="fs-4 text-secondary">{{ user.username }}</span>
+            </div>
+
+            <!-- Email Section -->
+            <div class="mb-3">
+                <span class="text-muted">Email:</span>
+                <span class="fs-5">{{ user.email }}</span>
+            </div>
+
+            <!-- Date Registered Section -->
+            <div class="mb-3">
+                <span class="text-muted">Date Registered:</span>
+                <span class="fs-5">{{ user.date_joined|date:"F j, Y" }}</span>
+            </div>
+
+            <!-- Two-Factor Authentication Section -->
+            <div class="mb-3">
+                <span class="text-muted">Two-Factor Authentication:</span>
+                {% if user.mfa_enabled %}
+                    <span class="badge rounded-pill bg-success" style="color:white;">Enabled</span>
+                {% else %}
+                    <span class="badge rounded-pill bg-danger" style="color:white;">Disabled</span>
+                {% endif %}
+            </div>
+        </div>
+
+
+
+        <!-- Edit Mode -->
+        <form method="POST" action="" id="editMode" style="display: none;">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" required>
-            </div>
-            <div class="form-group">
-                <label for="first_name">First Name</label>
-                <input type="text" id="first_name" name="first_name" class="form-control" value="{{ user.first_name }}">
-            </div>
-            <div class="form-group">
-                <label for="last_name">Last Name</label>
-                <input type="text" id="last_name" name="last_name" class="form-control" value="{{ user.last_name }}">
+            <div class="row">
+                <div class="col-md-6 form-group mb-2">
+                    <label for="first_name">First Name</label>
+                    <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                </div>
+                <div class="col-md-6 form-group mb-2">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                </div>
             </div>
 
-            <button type="submit" class="btn def-btn">Save Changes</button>
+            <div class="row">
+                <div class="col-md-6 form-group mb-2">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" class="form-control" value="{{ user.username }}" required>
+                </div>
+                <div class="col-md-6 form-group mb-2">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                </div>
+            </div>
+
+            <hr>
+            <!-- Two-Factor Auth Editable Section -->
+            <div class="form-group mb-3">
+                <label><strong>Two-Factor Authentication:</strong></label><br>
+                {% if not user.mfa_enabled %}
+                    <!-- Instructions Section -->
+
+                    <div class="alert alert-info mb-3" role="alert">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <strong>To enable Two-Factor Authentication (2FA):</strong>
+                        <ol class="mb-0">
+                            <li>Install the <a href="https://www.microsoft.com/en/security/mobile-authenticator-app" target="_blank"> Microsoft authenticator app </a> on your phone. </li>
+                            <li>Once done, scan the QR code using your authenticator app. </li>
+                            <li>Enter the 6-digit code generated by the app below.</li>
+                            <li>Click "Submit" to enable 2FA on your account.</li>
+                        </ol>
+                    </div>
+
+                    <!-- QR Code and OTP Section -->
+                    <div class="row">
+                        <div class = "col-md-3">
+                            <img src="{{ qrcode }}" alt="QR Code" class="my-2" style="max-width: 150px;"><br>
+                        </div>
+
+                        <div class="col-md-4" style="margin-top: 5%;">
+                            <!-- OTP Input Fields -->
+                            <div class="otp-inputs">
+                                <input type="text" id="otp_code_1" name="otp_code_1" maxlength="1" oninput="moveFocus(this, 'otp_code_2')" required>
+                                <input type="text" id="otp_code_2" name="otp_code_2" maxlength="1" oninput="moveFocus(this, 'otp_code_3')" required>
+                                <input type="text" id="otp_code_3" name="otp_code_3" maxlength="1" oninput="moveFocus(this, 'otp_code_4')" required>
+                                <input type="text" id="otp_code_4" name="otp_code_4" maxlength="1" oninput="moveFocus(this, 'otp_code_5')" required>
+                                <input type="text" id="otp_code_5" name="otp_code_5" maxlength="1" oninput="moveFocus(this, 'otp_code_6')" required>
+                                <input type="text" id="otp_code_6" name="otp_code_6" maxlength="1" required>
+                            </div>
+                            <input type="hidden" name="user_id" value="{{ user.responderID }}">
+
+                            <button type="submit" formaction="{% url 'verify_mfa' %}" class="btn def-btn-outline">
+                                Verify
+                            </button>
+                        </div>
+
+
+                    </div>
+                {% else %}
+                    <a href="{% url 'disable_2fa' %}" class="btn btn-danger btn-sm mt-2">Disable 2FA</a>
+                {% endif %}
+            </div>
+
+
+            <button type="submit" class="btn def-btn w-100 mt-3">Save Changes</button>
         </form>
+    </div>
+</div>
+
+<script>
+    function toggleEdit() {
+        const view = document.getElementById('viewMode');
+        const edit = document.getElementById('editMode');
+        if (view.style.display === 'none') {
+            view.style.display = 'block';
+            edit.style.display = 'none';
+        } else {
+            view.style.display = 'none';
+            edit.style.display = 'block';
+        }
+    }
+
+    function setFocus() {
+        // Set focus on the first OTP input when the page loads
+        document.getElementById('otp_code_1').focus();
+    }
+
+    function moveFocus(currentInput, nextInputId) {
+        // Check if current input is filled
+        if (currentInput.value.length === 1) {
+            // Move focus to the next input box
+            document.getElementById(nextInputId).focus();
+        }
+    }
+</script>
     </div>
 {% endblock %}

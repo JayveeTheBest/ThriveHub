@@ -90,7 +90,7 @@
 <body>
     <div class="form-container">
         <h2>Responder Registration</h2>
-        <form action="{% url 'responder:registration' %}" method="POST">
+        <form action="{% url 'responder:registration' %}" method="POST" style="width: 94%;">
             {% csrf_token %}
             <div class="form-group">
                 {{ form.as_p }}

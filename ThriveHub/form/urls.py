@@ -6,6 +6,7 @@ urlpatterns = [
     path('callReports/', views.callReports, name='Reports'),
     path('', views.addCall, name='AddCall'),
     path("save-draft/", views.save_draft, name="save_draft"),
+    path('api/referrals/', views.get_referrals, name='get_referrals'),
     path('load-draft/', views.load_draft, name='load_draft'),
     path("transcribe/", views.transcribe_audio, name="transcribe"),
     path('forward_transcript/', views.forward_transcript, name='forward_transcript'),

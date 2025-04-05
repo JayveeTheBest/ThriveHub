@@ -22,14 +22,77 @@
             <table class="styled-table" style="text-align: center;">
                 <thead>
                     <tr>
-                        <th style="text-align: center;">Session ID</th>
-                        <th style="text-align: center;">Call Duration</th>
-                        <th style="text-align: center;">Gender</th>
-                        <th style="text-align: center;">Age</th>
-                        <th style="text-align: center;">Risk Level</th>
-                        <th style="text-align: center;">Intervention</th>
+                        <th style="text-align: center;">
+                            <a href="?sort=sessionID&order={% if sort_by == 'sessionID' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Session ID
+                                {% if sort_by == "sessionID" %}
+                                    <i class="fa-solid {% if order == 'asc' %}fa-sort-up{% else %}fa-sort-down{% endif %}"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-sort"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th style="text-align: center;">
+                            <a href="?sort=duration&order={% if sort_by == 'duration' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Call Duration
+                                {% if sort_by == "duration" %}
+                                    <i class="fa-solid {% if order == 'asc' %}fa-sort-up{% else %}fa-sort-down{% endif %}"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-sort"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th style="text-align: center;">
+                            <a href="?sort=gender&order={% if sort_by == 'gender' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Gender
+                                {% if sort_by == "gender" %}
+                                    <i class="fa-solid {% if order == 'asc' %}fa-sort-up{% else %}fa-sort-down{% endif %}"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-sort"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th style="text-align: center;">
+                            <a href="?sort=age&order={% if sort_by == 'age' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Age
+                                {% if sort_by == "age" %}
+                                    <i class="fa-solid {% if order == 'asc' %}fa-sort-up{% else %}fa-sort-down{% endif %}"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-sort"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th style="text-align: center;">
+                            <a href="?sort=risk&order={% if sort_by == 'risk' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Risk Level
+                                {% if sort_by == "risk" %}
+                                    <i class="fa-solid {% if order == 'asc' %}fa-sort-up{% else %}fa-sort-down{% endif %}"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-sort"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th style="text-align: center;">
+                            <a href="?sort=intervention&order={% if sort_by == 'intervention' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                Intervention
+                                {% if sort_by == "intervention" %}
+                                    <i class="fa-solid {% if order == 'asc' %}fa-sort-up{% else %}fa-sort-down{% endif %}"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-sort"></i>
+                                {% endif %}
+                            </a>
+                        </th>
                         {% if user.is_superuser %}
-                            <th style="text-align: center;">Responder</th>
+                            <th style="text-align: center;">
+                                <a href="?sort=responder&order={% if sort_by == 'responder' and order == 'asc' %}desc{% else %}asc{% endif %}">
+                                    Responder
+                                    {% if sort_by == "responder" %}
+                                        <i class="fa-solid {% if order == 'asc' %}fa-sort-up{% else %}fa-sort-down{% endif %}"></i>
+                                    {% else %}
+                                        <i class="fa-solid fa-sort"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                         {% endif %}
                     </tr>
                 </thead>

@@ -1,3 +1,5 @@
+import base64
+import io
 from django.contrib.auth.decorators import login_required
 from collections import defaultdict
 from django.contrib.auth.models import User
@@ -6,9 +8,12 @@ from django.db.models import Count, F, Q
 import json
 from django.db.models.functions import TruncMonth, TruncYear
 from django.contrib import messages
-from form.models import ReferralContact, Caller, CallSession
+from django.contrib.auth import authenticate, login, logout
+from form.models import ReferralContact, Caller, CallSession, Responder
 from form.forms import ReferralContactForm
 from django.core.paginator import Paginator
+import pyotp
+import qrcode
 
 
 @login_required(login_url="/responder/login")
@@ -162,6 +167,23 @@ def referrals(request):
 @login_required
 def settings(request):
     user = request.user
+    if not user.mfa_secret:
+        user.mfa_secret = pyotp.random_base32()
+        user.save()
+
+    otp_uri = pyotp.totp.TOTP(user.mfa_secret).provisioning_uri(
+        name=user.email,
+        issuer_name="ThriveHub"
+    )
+
+    qr = qrcode.make(otp_uri)
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+
+    buffer.seek(0)
+    qr_code = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    qr_code_data_uri = f"data:image/png;base64,{qr_code}"
 
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -175,10 +197,67 @@ def settings(request):
         user.save()
 
         messages.success(request, "Your profile has been updated successfully.")
-        return redirect('settings')  # Redirect to settings after saving
+        return render(request, 'settings.html', {"qrcode": qr_code_data_uri, 'user': user})  # Redirect to settings after saving
 
-    return render(request, 'settings.html', {'user': user})
+    return render(request, 'settings.html', {"qrcode": qr_code_data_uri, 'user': user})
 
+
+def verify_2fa_otp(user, otp ):
+    totp = pyotp.TOTP(user.mfa_secret)
+    if totp.verify(otp):
+        user.mfa_enabled = True
+        user.save()
+        return True
+    return False
+
+
+def verify_mfa(request):
+    if request.method == 'POST':
+        if request.method == 'POST':
+            # Retrieve OTP code from individual input fields
+            otp = ''.join([
+                request.POST.get('otp_code_1', ''),
+                request.POST.get('otp_code_2', ''),
+                request.POST.get('otp_code_3', ''),
+                request.POST.get('otp_code_4', ''),
+                request.POST.get('otp_code_5', ''),
+                request.POST.get('otp_code_6', ''),
+            ])
+        user_id = request.POST.get('user_id')
+        if not user_id:
+            messages.error(request, 'Invalid Responder ID. Please try again.')
+            return render(request, 'otp_verify.html', {'user_id': user_id})
+
+        user = Responder.objects.get(responderID=user_id)
+        if verify_2fa_otp(user, otp):
+            if request.user.is_authenticated:
+                messages.success(request, 'Two-Factor Authentication enabled successfully !')
+                return redirect('settings')
+
+            login(request, user)
+            messages.success(request, 'Login successful!')
+            return redirect('dashboard')
+        else:
+            if request.user.is_authenticated:
+                messages.error(request, 'Invalid OTP code. Please try again.')
+                return redirect('settings')
+            messages.error(request, 'Invalid OTP code. Please try again.')
+            return render(request, 'otp_verify.html', {'user_id': user_id})
+
+    return render(request, 'otp_verify.html', {'user_id': user_id})
+
+
+@login_required
+def disable_2fa(request):
+    user = request.user
+    if user.mfa_enabled:
+        user.mfa_enabled = False
+        user.save()
+        messages.success(request, "Two-Factor Authentication has been disabled.")
+        return redirect('settings')
+    else:
+        messages.info(request, "2FA is already disabled.")
+    return redirect('settings')
 
 @login_required
 def referrals(request):

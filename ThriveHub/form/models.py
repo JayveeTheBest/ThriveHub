@@ -1,19 +1,24 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
 from django.utils.timezone import now
+from  django.conf import settings
 
 
 # Create your models here.
 
 
-class Responder(models.Model):
+class Responder(AbstractUser):
     responderID = models.AutoField(primary_key=True)
+    mfa_secret = models.CharField(max_length=16, blank=True, null=True)
+    mfa_enabled = models.BooleanField(default=False)
     responderName = models.CharField(max_length=255)
     role = models.CharField(max_length=255)
     shift = models.CharField(max_length=255)
+    password = models.CharField(default="password")
+    username = models.CharField(max_length=150, unique=True)
 
     def __str__(self):
-        return self.responderName
+        return self.username
 
 
 class Caller(models.Model):
@@ -85,7 +90,7 @@ class Caller(models.Model):
 class CallSession(models.Model):
     sessionID = models.AutoField(primary_key=True)
     caller = models.ForeignKey(Caller, on_delete=models.CASCADE, related_name='sessions')
-    responder = models.ForeignKey(User, on_delete=models.CASCADE, related_name='call_sessions', default=1)
+    responder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='call_sessions', default=1)
     startTime = models.TimeField(null=True, blank=True)
     endTime = models.TimeField(null=True, blank=True)
     callDate = models.DateField(default=now)
@@ -159,7 +164,7 @@ class ReferralContact(models.Model):
 
 
 class Draft(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='drafts')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='drafts')
     form_data = models.JSONField()  # Stores form data as JSON
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

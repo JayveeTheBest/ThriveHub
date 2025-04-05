@@ -197,6 +197,37 @@
                 </form>
             </div>
 
+            <!-- Floating Contact Icon -->
+            <button id="contact-icon" class="btn def-btn floating-contact-icon" data-bs-toggle="modal" data-bs-target="#referralModal">
+                <i class="fa-solid fa-address-book"></i>
+            </button>
+
+            <!-- Referral Contacts Panel -->
+            <div id="referral-panel" class="referral-panel" style="display: none;">
+                <!-- Header Row with Title & Search Icon -->
+                <div id="referralHeader" class="d-flex justify-content-between align-items-center def-btn p-2 rounded slide-in" style="margin-bottom: 10px;">
+                    <h5 class="mb-0">Referral Contacts</h5>
+                    <button id="toggleSearch" class="btn btn-outline-light btn-sm">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+
+                <!-- Search Box -->
+                <div id="searchBox" class="d-flex align-items-center slide-out" style="display: none; margin-bottom: 10px;">
+                    <input type="text" id="searchReferrals" class="form-control" placeholder="Search by name, location, gender">
+                    <button id="closeSearch" class="btn ms-2">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Scrollable Accordion Container -->
+                <div class="accordion scrollable-content" id="referralAccordion">
+                    <!-- Referral contacts will be dynamically loaded here -->
+                </div>
+            </div>
+
+
+
 
 
 <script>
@@ -431,6 +462,155 @@
         } else {
             console.error("Recording buttons or status elements not found.");
         }
+
+        const contactIcon = document.getElementById("contact-icon");
+        const referralPanel = document.getElementById("referral-panel");
+        const referralAccordion = document.getElementById("referralAccordion");
+        const searchInput = document.getElementById("searchReferrals");
+
+        let panelOpen = false;
+
+        // Toggle Panel Display
+        contactIcon.addEventListener("click", function () {
+            if (panelOpen) {
+                referralPanel.style.display = "none";
+                panelOpen = false;
+            } else {
+                referralPanel.style.display = "block";
+                panelOpen = true;
+
+                // Fetch referral contacts from API
+                fetch("/form/api/referrals/")
+                    .then(response => response.json())
+                    .then(data => {
+                        referralAccordion.innerHTML = ""; // Clear previous data
+                        data.forEach((contact, index) => {
+                            referralAccordion.innerHTML += `
+                                <div class="accordion-item">
+                                    <h6 class="accordion-header" id="heading${index}">
+                                        <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#collapse${index}"
+                                            aria-expanded="false" aria-controls="collapse${index}"
+                                            style="border: none;background: transparent; width: 100%;">
+                                            <!-- Toast-style contact info -->
+                                            <div class="toast show" style="max-height: fit-content; padding: 5px;">
+                                                <div class="toast-header d-flex align-items-center justify-content-between">
+                                                    <!-- Gender Icon -->
+                                                    <span class="${contact.gender === 'Male' ? 'mars-icon' : 'venus-icon'}" style="margin-right: 10px;">
+                                                        <i class="fa-solid ${contact.gender === 'Male' ? 'fa-mars' : 'fa-venus'}"></i>
+                                                    </span>
+
+                                                    <!-- Name -->
+                                                    <strong class="ms-2 flex-grow-1" style="text-align: left;">${contact.name}</strong>
+
+                                                    <!-- Last Updated -->
+                                                    <small class="text-muted text-end">
+                                                        <i class="fa-solid fa-clock"></i>
+                                                        ${new Date(contact.date_updated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </h6>
+
+                                    <div id="collapse${index}" class="accordion-collapse collapse"
+                                        aria-labelledby="heading${index}">
+                                        <div class="accordion-body">
+                                            <ul class="list-group">
+                                                <li class="list-group-item">
+                                                    <i class="fa-solid fa-phone"></i>
+                                                    <small class="text-muted">${contact.phone}</small>
+                                                </li>
+                                                <li class="list-group-item">
+                                                    <i class="fa-solid fa-location-dot"></i>
+                                                    <small class="text-muted">${contact.location}</small>
+                                                </li>
+                                                <li class="list-group-item">
+                                                    <i class="fa-solid fa-envelope"></i>
+                                                    <small class="text-muted">${contact.email}</small>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hidden text for search -->
+                                    <span class="search-data d-none">${contact.location} ${contact.gender}</span>
+                                </div>
+
+
+                            `;
+                        });
+
+                        function hideContact(index) {
+                            document.querySelector(`#collapse${index} .border.rounded`).classList.add("d-none");
+                        }
+
+                        // Call search function after data loads
+                        setupSearch();
+                    })
+                    .catch(error => console.error("Error fetching referrals:", error));
+            }
+        });
+
+        // Search Function
+        function setupSearch() {
+            searchInput.addEventListener("input", function () {
+                let filter = this.value.toLowerCase();
+                let items = document.querySelectorAll(".accordion-item");
+
+                items.forEach(item => {
+                    let name = item.querySelector(".accordion-button").textContent.toLowerCase();
+                    let details = item.querySelector(".search-data").textContent.toLowerCase();
+
+                    // Show item if name, location, or gender matches the search input
+                    if (name.includes(filter) || details.includes(filter)) {
+                        item.style.display = "block";
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+            });
+        }
+
+    });
+    document.getElementById("toggleSearch").addEventListener("click", function() {
+        let header = document.getElementById("referralHeader");
+        let searchBox = document.getElementById("searchBox");
+
+        header.classList.add("hidden"); // Fade out
+        setTimeout(() => {
+            header.style.display = "none";
+            searchBox.style.display = "flex";
+            searchBox.classList.remove("hidden"); // Fade in
+            document.getElementById("searchReferrals").focus(); // Focus input
+        }, 400); // Matches the transition duration
+    });
+
+    document.getElementById("toggleSearch").addEventListener("click", function() {
+        let header = document.getElementById("referralHeader");
+        let searchBox = document.getElementById("searchBox");
+
+        header.classList.add("slide-out"); // Slide out header
+        setTimeout(() => {
+            header.style.display = "none";
+            searchBox.style.display = "flex";
+            searchBox.classList.remove("slide-out");
+            searchBox.classList.add("slide-in"); // Slide in search box
+            document.getElementById("searchReferrals").focus(); // Focus input
+        }, 400); // Matches transition duration
+    });
+
+    document.getElementById("closeSearch").addEventListener("click", function() {
+        let header = document.getElementById("referralHeader");
+        let searchBox = document.getElementById("searchBox");
+
+        searchBox.classList.add("slide-out"); // Slide out search box
+        setTimeout(() => {
+            searchBox.style.display = "none";
+            header.style.display = "flex";
+            header.classList.remove("slide-out");
+            header.classList.add("slide-in"); // Slide in header
+        }, 400);
     });
 </script>
 

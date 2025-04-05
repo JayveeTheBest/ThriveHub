@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'crispy_bootstrap4',
 ]
 
+AUTH_USER_MODEL = "form.Responder"
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -73,8 +75,6 @@ TEMPLATES = [
         },
     },
 ]
-
-WSGI_APPLICATION = 'ThriveHub.wsgi.application'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 

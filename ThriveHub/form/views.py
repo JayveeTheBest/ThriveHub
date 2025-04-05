@@ -1,11 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Max
+from django.db.models import Max, F, ExpressionWrapper, DurationField
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils.timezone import now
 from django.core.paginator import Paginator
-from .models import Caller, CallSession, AITranscript, Patient, Representative, Draft
+from .models import Caller, CallSession, AITranscript, Patient, Representative, Draft, ReferralContact
 from .forms import AddCall, AddCallSession, AddPatientForm, AddRepresentativeForm
 from groq import Groq
 from django.conf import settings
@@ -21,6 +21,52 @@ from django.urls import reverse
 
 @login_required()
 def callReports(request):
+    sort_by = request.GET.get('sort', 'sessionID')  # Default sorting by sessionID
+    order = request.GET.get('order', 'asc')  # Default order ascending
+
+    # Define valid sortable fields and their corresponding model attributes
+    sort_fields = {
+        'sessionID': 'sessionID',
+        'duration': 'duration',  # Annotated field
+        'gender': 'caller__gender',
+        'age': 'caller__age',
+        'risk': 'caller__riskAssessment',
+        'intervention': 'caller__intervention',
+        'responder': 'responder__username'
+    }
+
+    # Validate sorting field
+    if sort_by not in sort_fields:
+        sort_by = 'sessionID'  # Default to session ID if an invalid field is given
+
+    # Determine sorting order
+    order_prefix = '' if order == 'asc' else '-'
+    sort_field = f"{order_prefix}{sort_fields[sort_by]}"
+
+    # Check if the user is an admin
+    if request.user.is_staff:
+        # Admin users can see all call logs
+        call_sessions = CallSession.objects.select_related('caller', 'responder').annotate(
+            duration=ExpressionWrapper(
+                F('endTime') - F('startTime'),
+                output_field=DurationField()
+            )
+        ).order_by(sort_field)
+    else:
+        # Non-admin users can only see their own call logs
+        call_sessions = CallSession.objects.filter(responder=request.user).select_related('caller',
+                                                                                          'responder').annotate(
+            duration=ExpressionWrapper(
+                F('endTime') - F('startTime'),
+                output_field=DurationField()
+            )
+        ).order_by(sort_field)
+
+    # Pagination: Show 10 records per page
+    paginator = Paginator(call_sessions, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     # Get the current year's last two digits
     current_year = datetime.now().year % 100  # e.g., 2024 -> 24
 
@@ -29,41 +75,24 @@ def callReports(request):
     last_session_id = last_session['sessionID__max']
 
     if last_session_id:
-        # Increment the last sessionID
         next_session_id = last_session_id + 1
     else:
-        # If no sessions exist for the current year, start from 1
-        next_session_id = 1
+        next_session_id = 1  # Start from 1 if no sessions exist
 
     # Format the sessionID for display
     formatted_session_id = f'TPCB{current_year}-{next_session_id:04}'
+
+    # Fetch caller data
     caller = Caller.objects.all()
-    if request.user.is_staff or request.user.is_superuser:
-        # Admin can see all call sessions
-        callSession = CallSession.objects.all().select_related('caller').prefetch_related('transcript')
-    else:
-        # Regular users can only see their own call sessions
-        callSession = CallSession.objects.filter(responder=request.user).select_related('caller').prefetch_related('transcript')
-    for session in callSession:
-        # Combine with an arbitrary date to calculate the duration
-        start_datetime = datetime.combine(datetime.today(), session.startTime)
-        end_datetime = datetime.combine(datetime.today(), session.endTime)
 
-        # Adjust for overnight calls
-        if end_datetime < start_datetime:
-            end_datetime += timedelta(days=1)
-
-        # Calculate duration
-        session.duration = end_datetime - start_datetime
-
-        # Pagination: Show 10 records per page
-        paginator = Paginator(callSession, 10)  # Adjust page size if needed
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
+    print(f"Sorting by: {sort_by}, Order: {order}")  # Debugging Output
 
     return render(request, 'form/call_report.html', {
         'caller': caller,
-        'callSession': page_obj})
+        'callSession': page_obj,  # Corrected to use sorted and paginated data
+        'sort_by': sort_by,
+        'order': order,
+    })
 
 
 @login_required
@@ -125,6 +154,12 @@ def exportCallReports(request):
     response['Content-Disposition'] = 'attachment; filename=CallReports.xlsx'
     wb.save(response)
     return response
+
+
+def get_referrals(request):
+    referrals = ReferralContact.objects.all().values('name', 'location', 'gender', 'email', 'phone', 'date_updated')
+    print(referrals)
+    return JsonResponse(list(referrals), safe=False)
 
 
 def addCall(request):

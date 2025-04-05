@@ -178,6 +178,16 @@
     color: white;
 }
 
+.def-btn-outline {
+    color: #4CAF8B;
+    border-color: #4CAF8B;
+}
+
+.def-btn-outline:hover {
+    background-color: #4CAF8B;
+    color: white;
+}
+
 /* Main content area */
 .main-content {
     flex: 1;
@@ -268,6 +278,16 @@
     padding: 20px;
     flex: 1 1 calc(20% - 20px); /* Allow 3 cards in a row */
     width: 20%;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.card-full {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    flex: 1 1 calc(20% - 20px); /* Allow 3 cards in a row */
+    width: 100%;
     transition: box-shadow 0.3s ease-in-out;
 }
 
@@ -683,7 +703,7 @@
     width: 40px;
     height: 40px;
     overflow: hidden;
-    background-color: #4CAF8B
+    background-color: #4CAF8B;
     color: white;
     text-decoration: none;
     border-radius: 5px;
@@ -777,11 +797,11 @@
     }
 
     .mars-icon {
-        color: #007bff; /* Custom blue */
+        color: #5FA3E4; /* Soft Blue */
     }
 
     .venus-icon {
-        color: #e83e8c; /* Custom pink */
+        color: #F28BB5; /* Muted Coral/Salmon */
     }
 
     .nav-link.active {
@@ -888,4 +908,117 @@
     #transcript:empty:before {
         content: attr(data-placeholder);
         color: #999;
+    }
+
+    th a {
+        color: white; /* Keep text and icons white */
+        text-decoration: none; /* Remove underline */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px; /* Space between text and icon */
+    }
+
+    th a:hover {
+        color: #f8f9fa; /* Slightly lighter white on hover */
+    }
+
+    th i {
+        color: white; /* Ensure icons stay white */
+        font-size: 14px; /* Adjust icon size if needed */
+    }
+
+    .floating-contact-icon {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .floating-contact-icon i {
+        font-size: 24px;
+    }
+
+    .referral-panel {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 300px;
+        background: white;
+        border: 1px solid #ccc;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: none; /* Hidden by default */
+    }
+
+    .contact-card {
+        background: #f8f9fa;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+
+    .slide-in, .slide-out {
+        transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+    }
+    .slide-in {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    .slide-out {
+        transform: translateX(-100%);
+        opacity: 0;
+        position: absolute;
+        width: 100%;
+    }
+
+    .form-control:focus {
+    border-color: #4CAF8B;
+    }
+
+    /* Limits the referral panel height and enables scrolling */
+    .scrollable-panel {
+        max-height: 400px; /* Adjust as needed */
+        overflow-y: auto;
+        padding-right: 10px; /* Optional: space for scrollbar */
+    }
+
+    /* Ensures the accordion inside is also scrollable if needed */
+    .scrollable-content {
+        max-height: 350px; /* Should be less than parent */
+        overflow-y: auto;
+    }
+
+    #searchReferrals::placeholder {
+        font-size: 14px; /* Adjust as needed */
+        color: gray; /* Optional: Change placeholder color */
+        font-style: italic; /* Optional: Make it italic */
+    }
+
+    .otp-inputs {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .otp-inputs input {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background-color: #f8f8f8;
+        color: #333;
+        transition: border-color 0.3s ease;
+    }
+    .otp-inputs input:focus {
+        outline: none;
+        border-color: #4CAF8B;
+    }
+    .otp-inputs input.error {
+        border-color: red;
     }
