@@ -83,9 +83,12 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'thrivehub_db',
+        'USER': 'admin',
+        'PASSWORD': 'thrivehub_password',
+        'HOST': 'localhost',  # or the host of your PostgreSQL server
+        'PORT': '5432',  # default PostgreSQL port    }
 }
 
 # Password validation
