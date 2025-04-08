@@ -115,7 +115,7 @@
                         data-ai-summary="{{ session.transcript.transcriptSummary }}"
                         {% if user.is_superuser %}data-responder="{{ session.responder }}"{% endif %}>
 
-                        <td>TPCB24-00{{ session.sessionID }}</td>
+                        <td>{{ formatted_session_id }}{{ session.sessionID|stringformat:"04d" }}</td>
                         <td>{{ session.duration }}</td>
                         <td>{{ session.caller.gender }}</td>
                         <td>{{ session.caller.age }}</td>

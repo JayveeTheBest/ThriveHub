@@ -15,7 +15,7 @@ class Responder(AbstractUser):
     role = models.CharField(max_length=255)
     shift = models.CharField(max_length=255)
     password = models.CharField(default="password")
-    username = models.CharField(max_length=150, unique=True)
+    username = models.CharField(max_length=150, unique=True, default="Responder")
 
     def __str__(self):
         return self.username
@@ -39,27 +39,83 @@ class Caller(models.Model):
     ]
 
     SOURCE_CHOICES = [
-        ('Online', 'Online'),
-        ('Media', 'Media'),
-        ('Family/Friend', 'Family/Friend'),
         ('Colleague', 'Colleague'),
+        ('Family/Friends/Relationships', 'Family/Friends/Relationships'),
+        ('Government Offices', 'Government Offices'),
+        ('Media', 'Media'),
+        ('Medical Professionals', 'Medical Professionals'),
+        ('N/A and Refused', 'N/A and Refused'),
+        ("NGO's and other Organizations", "NGO's and other Organizations"),
+        ('Online', 'Online'),
+        ('Other Hotlines', 'Other Hotlines'),
+        ('Private Offices/Hospitals', 'Private Offices/Hospitals'),
         ('Referral', 'Referral'),
+        ('Repeat Caller', 'Repeat Caller'),
+        ('School Personnels', 'School Personnels'),
+        ('Seminars/IEC Materials', 'Seminars/IEC Materials'),
     ]
 
     REASON_CHOICES = [
+        ('Abortion', 'Abortion'),
+        ('Academic Problem', 'Academic Problem'),
+        ('Acute Stress Disorder', 'Acute Stress Disorder'),
+        ('ADHD', 'ADHD'),
+        ('Alcohol Dependence', 'Alcohol Dependence'),
+        ('Anger Management Issue', 'Anger Management Issue'),
+        ('Anxiety', 'Anxiety'),
+        ('Bipolar and OCD', 'Bipolar and OCD'),
+        ('Bullying', 'Bullying'),
+        ('Calling for Another Person', 'Calling for Another Person'),
+        ('Current Social Issue', 'Current Social Issue'),
+        ('Cyberbullying', 'Cyberbullying'),
+        ('Depression', 'Depression'),
+        ('Domestic Abuse', 'Domestic Abuse'),
+        ('Drug Addiction', 'Drug Addiction'),
+        ('Emotional Crisis', 'Emotional Crisis'),
+        ('Family Problem', 'Family Problem'),
+        ('Feelings of Sadness and Loneliness', 'Feelings of Sadness and Loneliness'),
+        ('Financial Problem', 'Financial Problem'),
+        ('Gambling Problem', 'Gambling Problem'),
+        ('Global Developmental Delay', 'Global Developmental Delay'),
+        ('Grief', 'Grief'),
+        ('Indentity Confusion', 'Indentity Confusion'),
+        ('Inquiry', 'Inquiry'),
+        ('Interpersonal Conflict', 'Interpersonal Conflict'),
+        ('Intimacy Problems', 'Intimacy Problems'),
+        ('Legal Advice', 'Legal Advice'),
+        ('Marital Problem', 'Marital Problem'),
+        ('Medication Concern', 'Medication Concern'),
         ('Mental Health', 'Mental Health'),
-        ('Marital', 'Marital'),
+        ('Needed Referral', 'Needed Referral'),
+        ('Other', 'Other'),
+        ('Panic Attack', 'Panic Attack'),
+        ('Physical Abuse', 'Physical Abuse'),
+        ('Postpartum Depression', 'Postpartum Depression'),
+        ('Psychiatric Emergency', 'Psychiatric Emergency'),
+        ('Psychosomatic Pain', 'Psychosomatic Pain'),
+        ('PTSD', 'PTSD'),
+        ('Rape', 'Rape'),
+        ('Relationship Problem', 'Relationship Problem'),
+        ('Schizophrenia', 'Schizophrenia'),
         ('School', 'School'),
-        ('Financial', 'Financial'),
+        ('Self-harming and Suicidal Attempt/Crisis', 'Self-harming and Suicidal Attempt/Crisis'),
+        ('Sexual Harassment and Sexual Abuse', 'Sexual Harassment and Sexual Abuse'),
         ('Suicidal Crisis', 'Suicidal Crisis'),
-        ('Calling for another person', 'Calling for another person'),
+        ('Suicidal Ideation', 'Suicidal Ideation'),
+        ('Symptoms of Insomnia', 'Symptoms of Insomnia'),
+        ('Trauma', 'Trauma'),
+        ('Work Problem', 'Work Problem'),
     ]
 
     INTERVENTION_CHOICES = [
-        ('PsychEducation', 'PsychEducation'),
-        ('Referral', 'Referral'),
-        ('Empathetic Listening', 'Empathetic Listening'),
         ('Breathing Technique', 'Breathing Technique'),
+        ('Empathetic Listening', 'Empathetic Listening'),
+        ('Empty Chair Technique', 'Empty Chair Technique'),
+        ('PsychEducation', 'PsychEducation'),
+        ('Referred to a Mental Health Professional', 'Referred to a Mental Health Professional'),
+        ('Referred to the Authority', 'Referred to the Authority'),
+        ('Referred to the nearest Emergency Unit', 'Referred to the nearest Emergency Unit'),
+        ('Safety Planning', 'Safety Planning'),
     ]
 
     RISK_CHOICES = [

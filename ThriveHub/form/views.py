@@ -68,19 +68,10 @@ def callReports(request):
     page_obj = paginator.get_page(page_number)
 
     # Get the current year's last two digits
-    current_year = datetime.now().year % 100  # e.g., 2024 -> 24
+    for call in CallSession.objects.all():
+        call_year = call.callDate.year % 100
+        formatted_session_id = f'TPCB{call_year:02d}-'
 
-    # Get the last sessionID for the current year
-    last_session = CallSession.objects.filter(callDate__year=datetime.now().year).aggregate(Max('sessionID'))
-    last_session_id = last_session['sessionID__max']
-
-    if last_session_id:
-        next_session_id = last_session_id + 1
-    else:
-        next_session_id = 1  # Start from 1 if no sessions exist
-
-    # Format the sessionID for display
-    formatted_session_id = f'TPCB{current_year}-{next_session_id:04}'
 
     # Fetch caller data
     caller = Caller.objects.all()
@@ -92,6 +83,7 @@ def callReports(request):
         'callSession': page_obj,  # Corrected to use sorted and paginated data
         'sort_by': sort_by,
         'order': order,
+        'formatted_session_id': formatted_session_id,
     })
 
 

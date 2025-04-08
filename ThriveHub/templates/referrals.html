@@ -67,6 +67,28 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-container">
+        <span class="step-links">
+            {% if contacts.has_previous %}
+                <a href="?page=1">&laquo; First</a>
+                <a href="?page={{ contacts.previous_page_number }}">Previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ contacts.number }} of {{ contacts.paginator.num_pages }}.
+            </span>
+
+            {% if contacts.has_next %}
+                <a href="?page={{ contacts.next_page_number }}">Next</a>
+                <a href="?page={{ contacts.paginator.num_pages }}">Last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+    
+   
+
 </div>
 
 <script>
